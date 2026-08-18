@@ -32,7 +32,6 @@ export const loginUser = async (
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
     body: JSON.stringify(payload),
   });
 
@@ -51,7 +50,6 @@ export const getMe = async (accessToken: string) => {
     headers: {
       Authorization: accessToken,
     },
-    credentials: "include",
   });
 
   const result = await response.json();
