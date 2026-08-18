@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { getProperties } from "@/services/property";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -91,6 +92,12 @@ export default async function Home() {
                     </span>
                   ))}
                 </div>
+                <Link
+                  href={`/properties/${property.id}`}
+                  className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  View Details
+                </Link>
               </CardContent>
             </Card>
           ))}
