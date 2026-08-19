@@ -4,6 +4,11 @@ export interface ICreateRentalRequest {
   message: string;
 }
 
+export interface IRentalRequestCategory {
+  id: string;
+  name: string;
+}
+
 export interface IRentalRequestProperty {
   id: string;
   title: string;
@@ -17,6 +22,7 @@ export interface IRentalRequestProperty {
   district: string;
   images: string[];
   status: string;
+  category?: IRentalRequestCategory;
 }
 
 export interface IRentalRequestTenant {

@@ -65,3 +65,68 @@ export const cancelRentalRequest = async (
 
   return result;
 };
+
+export const getLandlordRentalRequests = async (
+  accessToken: string,
+): Promise<IRentalRequest[]> => {
+  const response = await fetch(`${API_URL}/rental-requests/landlord`, {
+    method: "GET",
+    headers: {
+      Authorization: accessToken,
+    },
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to get landlord rental requests");
+  }
+
+  return result.data;
+};
+
+export const approveRentalRequest = async (
+  requestId: string,
+  accessToken: string,
+) => {
+  const response = await fetch(
+    `${API_URL}/rental-requests/${requestId}/approve`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: accessToken,
+      },
+    },
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to approve rental request");
+  }
+
+  return result;
+};
+
+export const rejectRentalRequest = async (
+  requestId: string,
+  accessToken: string,
+) => {
+  const response = await fetch(
+    `${API_URL}/rental-requests/${requestId}/reject`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: accessToken,
+      },
+    },
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to reject rental request");
+  }
+
+  return result;
+};
