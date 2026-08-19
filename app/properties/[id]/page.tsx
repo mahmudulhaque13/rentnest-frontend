@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { getPropertyById } from "@/services/property";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RentalRequestForm } from "@/components/property/rental-request-form";
 
 interface PropertyDetailsPageProps {
   params: Promise<{
@@ -115,6 +116,7 @@ export default async function PropertyDetailsPage({
           </CardContent>
         </Card>
       </div>
+      <RentalRequestForm propertyId={property.id} />
     </main>
   );
 }
