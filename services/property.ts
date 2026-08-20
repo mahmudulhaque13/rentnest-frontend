@@ -73,3 +73,55 @@ export const getMyProperties = async (accessToken: string) => {
 
   return result.data;
 };
+
+export const updateProperty = async (
+  id: string,
+  payload: {
+    title?: string;
+    description?: string;
+    rent?: number;
+    bedrooms?: number;
+    bathrooms?: number;
+    address?: string;
+    city?: string;
+    district?: string;
+    images?: string[];
+    amenities?: string[];
+    categoryId?: string;
+  },
+  accessToken: string,
+) => {
+  const response = await fetch(`${API_URL}/properties/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: accessToken,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to update property");
+  }
+
+  return result.data;
+};
+
+export const deleteProperty = async (id: string, accessToken: string) => {
+  const response = await fetch(`${API_URL}/properties/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: accessToken,
+    },
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to delete property");
+  }
+
+  return result.data;
+};
