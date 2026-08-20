@@ -1,7 +1,12 @@
 import Image from "next/image";
+
 import { getPropertyById } from "@/services/property";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { RentalRequestForm } from "@/components/property/rental-request-form";
+
+import { PropertyReviews } from "@/components/property/property-reviews";
 
 interface PropertyDetailsPageProps {
   params: Promise<{
@@ -18,15 +23,22 @@ export default async function PropertyDetailsPage({
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      {/* Property Details */}
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Property Image */}
         <div className="relative h-[400px] overflow-hidden rounded-xl bg-muted">
-          <Image
-            src={property.images[0]}
-            alt={property.title}
-            fill
-            className="object-cover"
-          />
+          {property.images?.[0] ? (
+            <Image
+              src={property.images[0]}
+              alt={property.title}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              No image available
+            </div>
+          )}
         </div>
 
         {/* Property Information */}
@@ -40,6 +52,7 @@ export default async function PropertyDetailsPage({
           </CardHeader>
 
           <CardContent>
+            {/* Rent + Status */}
             <div className="flex items-center justify-between">
               <p className="text-2xl font-bold">
                 ৳{property.rent.toLocaleString()}
@@ -59,6 +72,20 @@ export default async function PropertyDetailsPage({
               </span>
             </div>
 
+            {/* Rating */}
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-lg">⭐</span>
+
+              <span className="font-semibold">
+                {property.averageRating.toFixed(1)}
+              </span>
+
+              <span className="text-sm text-muted-foreground">
+                Average Rating
+              </span>
+            </div>
+
+            {/* Bedrooms / Bathrooms */}
             <div className="mt-6 grid grid-cols-2 gap-4">
               <div className="rounded-lg bg-muted p-4">
                 <p className="text-sm text-muted-foreground">Bedrooms</p>
@@ -73,6 +100,7 @@ export default async function PropertyDetailsPage({
               </div>
             </div>
 
+            {/* Description */}
             <div className="mt-6">
               <h2 className="font-semibold">Description</h2>
 
@@ -81,6 +109,7 @@ export default async function PropertyDetailsPage({
               </p>
             </div>
 
+            {/* Amenities */}
             <div className="mt-6">
               <h2 className="font-semibold">Amenities</h2>
 
@@ -96,6 +125,7 @@ export default async function PropertyDetailsPage({
               </div>
             </div>
 
+            {/* Category */}
             <div className="mt-6">
               <h2 className="font-semibold">Category</h2>
 
@@ -104,19 +134,30 @@ export default async function PropertyDetailsPage({
               </p>
             </div>
 
+            {/* Landlord */}
             <div className="mt-6">
               <h2 className="font-semibold">Landlord</h2>
 
               <div className="mt-2 text-sm text-muted-foreground">
                 <p>{property.landlord.name}</p>
+
                 <p>{property.landlord.email}</p>
+
                 <p>{property.landlord.phone}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Rental Request */}
       <RentalRequestForm propertyId={property.id} />
+
+      {/* Reviews */}
+      <PropertyReviews
+        propertyId={property.id}
+        averageRating={property.averageRating}
+      />
     </main>
   );
 }
