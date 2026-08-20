@@ -6,7 +6,7 @@ export interface IAdminUser {
   email: string;
   phone: string;
   role: "TENANT" | "LANDLORD" | "ADMIN";
-  status: "ACTIVE" | "BANNED";
+  status: "ACTIVE" | "BLOCKED";
   createdAt: string;
   updatedAt: string;
 }
@@ -88,7 +88,7 @@ export const getAllAdminUsers = async (
 
 export const updateAdminUserStatus = async (
   userId: string,
-  status: "ACTIVE" | "BANNED",
+  status: "ACTIVE" | "BLOCKED",
   accessToken: string,
 ): Promise<IAdminUser> => {
   const response = await fetch(`${API_URL}/admin/users/${userId}`, {
