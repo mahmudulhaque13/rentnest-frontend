@@ -57,3 +57,19 @@ export const createProperty = async (
 
   return result;
 };
+
+export const getMyProperties = async (accessToken: string) => {
+  const response = await fetch(`${API_URL}/properties/my-properties`, {
+    headers: {
+      Authorization: accessToken,
+    },
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to get your properties");
+  }
+
+  return result.data;
+};
