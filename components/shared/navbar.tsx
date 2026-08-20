@@ -27,6 +27,7 @@ export function Navbar() {
 
           {/* Navigation */}
           <div className="hidden items-center gap-8 md:flex">
+            {/* Common Navigation */}
             <Link
               href="/"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary"
@@ -40,6 +41,84 @@ export function Navbar() {
             >
               Properties
             </Link>
+
+            {/* Tenant Navigation */}
+            {user?.role === "TENANT" && (
+              <>
+                <Link
+                  href="/rental-requests"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  My Requests
+                </Link>
+
+                <Link
+                  href="/payments"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Payments
+                </Link>
+              </>
+            )}
+
+            {/* Landlord Navigation */}
+            {user?.role === "LANDLORD" && (
+              <>
+                <Link
+                  href="/landlord/properties"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  My Properties
+                </Link>
+
+                <Link
+                  href="/landlord/rental-requests"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Rental Requests
+                </Link>
+
+                <Link
+                  href="/landlord/earnings"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Earnings
+                </Link>
+              </>
+            )}
+
+            {/* Admin Navigation */}
+            {user?.role === "ADMIN" && (
+              <>
+                <Link
+                  href="/admin"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Dashboard
+                </Link>
+
+                <Link
+                  href="/admin/users"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Users
+                </Link>
+
+                <Link
+                  href="/admin/properties"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Manage Properties
+                </Link>
+
+                <Link
+                  href="/admin/rental-requests"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Rental Requests
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Auth */}
