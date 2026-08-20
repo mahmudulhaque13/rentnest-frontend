@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -8,6 +7,8 @@ import {
   cancelRentalRequest,
   getMyRentalRequests,
 } from "@/services/rental-request";
+
+import { createCheckoutSession } from "@/services/payment";
 
 import { useAuth } from "@/components/providers/auth-provider";
 
@@ -32,7 +33,10 @@ export default function RentalRequestsPage() {
   const [requests, setRequests] = useState<IRentalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const [payingId, setPayingId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadRequests = async () => {
@@ -71,6 +75,7 @@ export default function RentalRequestsPage() {
     loadRequests();
   }, [user, authLoading]);
 
+  // Cancel Rental Request
   const handleCancel = async (requestId: string) => {
     const accessToken = localStorage.getItem("accessToken");
 
@@ -99,6 +104,37 @@ export default function RentalRequestsPage() {
     }
   };
 
+  // Stripe Payment
+  const handlePayment = async (requestId: string) => {
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (!accessToken) {
+      setError("Please login again.");
+      return;
+    }
+
+    setError("");
+    setPayingId(requestId);
+
+    try {
+      const result = await createCheckoutSession(requestId, accessToken);
+
+      if (!result.checkoutUrl) {
+        throw new Error("Checkout URL was not generated");
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = result.checkoutUrl;
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to start payment",
+      );
+
+      setPayingId(null);
+    }
+  };
+
+  // Loading
   if (authLoading || loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -109,6 +145,7 @@ export default function RentalRequestsPage() {
     );
   }
 
+  // Not logged in
   if (!user) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -132,6 +169,7 @@ export default function RentalRequestsPage() {
     );
   }
 
+  // Tenant only
   if (user.role !== "TENANT") {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -150,6 +188,7 @@ export default function RentalRequestsPage() {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">My Rental Requests</h1>
 
@@ -158,6 +197,7 @@ export default function RentalRequestsPage() {
         </p>
       </div>
 
+      {/* Error */}
       {error && (
         <Card className="mb-6">
           <CardContent className="py-4 text-sm text-destructive">
@@ -166,6 +206,7 @@ export default function RentalRequestsPage() {
         </Card>
       )}
 
+      {/* Empty State */}
       {requests.length === 0 && !error && (
         <Card>
           <CardContent className="py-12 text-center">
@@ -185,16 +226,23 @@ export default function RentalRequestsPage() {
         </Card>
       )}
 
+      {/* Rental Requests */}
       <div className="grid gap-6 md:grid-cols-2">
         {requests.map((request) => (
           <Card key={request.id} className="overflow-hidden">
-            <div className="relative h-52 w-full bg-muted">
-              <Image
-                src={request.property.images[0]}
-                alt={request.property.title}
-                fill
-                className="object-cover"
-              />
+            {/* Property Image */}
+            <div className="relative h-52 w-full overflow-hidden bg-muted">
+              {request.property.images?.[0] ? (
+                <img
+                  src={request.property.images[0]}
+                  alt={request.property.title}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                  No image
+                </div>
+              )}
             </div>
 
             <CardHeader>
@@ -220,6 +268,7 @@ export default function RentalRequestsPage() {
             </CardHeader>
 
             <CardContent className="space-y-4">
+              {/* Monthly Rent */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
                   Monthly Rent
@@ -230,6 +279,7 @@ export default function RentalRequestsPage() {
                 </span>
               </div>
 
+              {/* Move-in Date */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
                   Move-in Date
@@ -240,6 +290,7 @@ export default function RentalRequestsPage() {
                 </span>
               </div>
 
+              {/* Message */}
               <div>
                 <p className="text-sm font-medium">Your Message</p>
 
@@ -248,7 +299,9 @@ export default function RentalRequestsPage() {
                 </p>
               </div>
 
-              <div className="flex gap-3">
+              {/* Actions */}
+              <div className="flex flex-col gap-3 sm:flex-row">
+                {/* View Property */}
                 <Link
                   href={`/properties/${request.property.id}`}
                   className="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
@@ -256,6 +309,7 @@ export default function RentalRequestsPage() {
                   View Property
                 </Link>
 
+                {/* Cancel */}
                 {request.status === "PENDING" && (
                   <Button
                     variant="destructive"
@@ -266,6 +320,17 @@ export default function RentalRequestsPage() {
                     {cancellingId === request.id
                       ? "Cancelling..."
                       : "Cancel Request"}
+                  </Button>
+                )}
+
+                {/* Pay Now */}
+                {request.status === "APPROVED" && (
+                  <Button
+                    className="flex-1"
+                    disabled={payingId === request.id}
+                    onClick={() => handlePayment(request.id)}
+                  >
+                    {payingId === request.id ? "Processing..." : "Pay Now"}
                   </Button>
                 )}
               </div>
