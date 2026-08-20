@@ -21,6 +21,7 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
+  refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -30,38 +31,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const refreshUser = async () => {
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (!accessToken) {
+      setUser(null);
+      return;
+    }
+
+    try {
+      const result = await getMe(accessToken);
+
+      if (result.success) {
+        setUser(result.data);
+      } else {
+        setUser(null);
+      }
+    } catch {
+      localStorage.removeItem("accessToken");
+      setUser(null);
+    }
+  };
+
   useEffect(() => {
     const loadUser = async () => {
-      const accessToken = localStorage.getItem("accessToken");
-
-      if (!accessToken) {
-        setLoading(false);
-        return;
-      }
-
       try {
-        const result = await getMe(accessToken);
-
-        if (result.success) {
-          setUser(result.data);
-        }
-      } catch {
-        localStorage.removeItem("accessToken");
-        setUser(null);
+        await refreshUser();
       } finally {
         setLoading(false);
       }
     };
 
-    loadUser();
+    void loadUser();
   }, []);
 
   const logout = async () => {
     try {
       await logoutUser();
     } catch {
-      // Even if the backend logout fails,
-      // remove the local access token.
+      // Even if backend logout fails,
+      // remove local authentication state.
     } finally {
       localStorage.removeItem("accessToken");
       setUser(null);
@@ -73,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         loading,
+        refreshUser,
         logout,
       }}
     >

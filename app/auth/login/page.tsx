@@ -5,12 +5,17 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { loginUser } from "@/services/auth";
+
+import { useAuth } from "@/components/providers/auth-provider";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const router = useRouter();
+
+  const { refreshUser } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +38,9 @@ export default function LoginPage() {
       const { accessToken } = result.data;
 
       localStorage.setItem("accessToken", accessToken);
+
+      // Update AuthProvider immediately
+      await refreshUser();
 
       router.push("/");
       router.refresh();
