@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -196,10 +197,12 @@ function PropertiesContent() {
               {/* Image */}
               <div className="relative h-52 w-full overflow-hidden bg-muted">
                 {property.images?.[0] ? (
-                  <img
+                  <Image
                     src={property.images[0]}
                     alt={property.title}
-                    className="h-full w-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
