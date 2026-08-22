@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import {
   createReview,
@@ -42,7 +43,6 @@ export function PropertyReviews({
   const [editComment, setEditComment] = useState("");
 
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     const loadReviews = async () => {
@@ -51,9 +51,11 @@ export function PropertyReviews({
 
         setReviews(result);
       } catch (error) {
-        setError(
-          error instanceof Error ? error.message : "Failed to load reviews",
-        );
+        const message =
+          error instanceof Error ? error.message : "Failed to load reviews";
+
+        setError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -64,24 +66,35 @@ export function PropertyReviews({
 
   const handleCreateReview = async () => {
     if (!user || user.role !== "TENANT") {
-      setError("Only tenants can submit reviews.");
+      const message = "Only tenants can submit reviews.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
-      setError("Please login again.");
+      const message = "Please login again.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
     if (comment.trim().length < 10) {
-      setError("Comment must be at least 10 characters.");
+      const message = "Comment must be at least 10 characters.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
     setError("");
-    setSuccess("");
     setSubmitting(true);
 
     try {
@@ -99,11 +112,13 @@ export function PropertyReviews({
       setComment("");
       setRating(5);
 
-      setSuccess("Review submitted successfully.");
+      toast.success("Review submitted successfully.");
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to submit review",
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to submit review";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -113,7 +128,11 @@ export function PropertyReviews({
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
-      setError("Please login again.");
+      const message = "Please login again.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
@@ -126,7 +145,6 @@ export function PropertyReviews({
     }
 
     setError("");
-    setSuccess("");
     setDeletingId(reviewId);
 
     try {
@@ -136,11 +154,13 @@ export function PropertyReviews({
         currentReviews.filter((review) => review.id !== reviewId),
       );
 
-      setSuccess("Review deleted successfully.");
+      toast.success("Review deleted successfully.");
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to delete review",
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to delete review";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setDeletingId(null);
     }
@@ -151,7 +171,6 @@ export function PropertyReviews({
     setEditRating(review.rating);
     setEditComment(review.comment);
     setError("");
-    setSuccess("");
   };
 
   const cancelEditing = () => {
@@ -164,17 +183,24 @@ export function PropertyReviews({
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
-      setError("Please login again.");
+      const message = "Please login again.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
     if (editComment.trim().length < 10) {
-      setError("Comment must be at least 10 characters.");
+      const message = "Comment must be at least 10 characters.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
     setError("");
-    setSuccess("");
     setSubmitting(true);
 
     try {
@@ -194,12 +220,16 @@ export function PropertyReviews({
       );
 
       setEditingId(null);
+      setEditRating(5);
+      setEditComment("");
 
-      setSuccess("Review updated successfully.");
+      toast.success("Review updated successfully.");
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to update review",
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to update review";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -263,15 +293,6 @@ export function PropertyReviews({
         <Card>
           <CardContent className="py-4 text-sm text-destructive">
             {error}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Success */}
-      {success && (
-        <Card>
-          <CardContent className="py-4 text-sm text-green-700">
-            {success}
           </CardContent>
         </Card>
       )}
@@ -370,6 +391,10 @@ export function PropertyReviews({
                         className="mt-4 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                       />
 
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {editComment.length}/500
+                      </p>
+
                       <div className="mt-3 flex gap-2">
                         <Button
                           disabled={submitting}
@@ -378,7 +403,11 @@ export function PropertyReviews({
                           {submitting ? "Updating..." : "Update"}
                         </Button>
 
-                        <Button variant="outline" onClick={cancelEditing}>
+                        <Button
+                          variant="outline"
+                          onClick={cancelEditing}
+                          disabled={submitting}
+                        >
                           Cancel
                         </Button>
                       </div>

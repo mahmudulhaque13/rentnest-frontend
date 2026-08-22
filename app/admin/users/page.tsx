@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import {
   getAllAdminUsers,
@@ -18,11 +19,9 @@ export default function AdminUsersPage() {
   const { user, loading: authLoading } = useAuth();
 
   const [users, setUsers] = useState<IAdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     if (authLoading || !user || user.role !== "ADMIN") {
@@ -30,9 +29,18 @@ export default function AdminUsersPage() {
     }
 
     const loadUsers = async () => {
+      setLoading(true);
+      setError("");
+
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
+        const message = "Please login again.";
+
+        setError(message);
+        toast.error(message);
+        setLoading(false);
+
         return;
       }
 
@@ -41,9 +49,11 @@ export default function AdminUsersPage() {
 
         setUsers(result);
       } catch (error) {
-        setError(
-          error instanceof Error ? error.message : "Failed to load users",
-        );
+        const message =
+          error instanceof Error ? error.message : "Failed to load users";
+
+        setError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -59,14 +69,17 @@ export default function AdminUsersPage() {
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
-      setError("Please login again.");
+      const message = "Please login again.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
     const newStatus = currentStatus === "ACTIVE" ? "BLOCKED" : "ACTIVE";
 
     setError("");
-    setSuccess("");
     setUpdatingId(userId);
 
     try {
@@ -80,15 +93,17 @@ export default function AdminUsersPage() {
         currentUsers.map((item) => (item.id === userId ? updatedUser : item)),
       );
 
-      setSuccess(
+      toast.success(
         `User ${
           newStatus === "BLOCKED" ? "blocked" : "activated"
         } successfully.`,
       );
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to update user status",
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to update user status";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setUpdatingId(null);
     }
@@ -142,6 +157,7 @@ export default function AdminUsersPage() {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">User Management</h1>
 
@@ -150,6 +166,7 @@ export default function AdminUsersPage() {
         </p>
       </div>
 
+      {/* Error */}
       {error && (
         <Card className="mb-6">
           <CardContent className="py-4 text-sm text-destructive">
@@ -158,14 +175,7 @@ export default function AdminUsersPage() {
         </Card>
       )}
 
-      {success && (
-        <Card className="mb-6">
-          <CardContent className="py-4 text-sm text-green-700">
-            {success}
-          </CardContent>
-        </Card>
-      )}
-
+      {/* Users */}
       <Card>
         <CardHeader>
           <CardTitle>All Users ({users.length})</CardTitle>
@@ -198,27 +208,31 @@ export default function AdminUsersPage() {
                 <tbody>
                   {users.map((item) => {
                     const isAdmin = item.role === "ADMIN";
-
                     const isUpdating = updatingId === item.id;
 
                     return (
                       <tr key={item.id} className="border-b last:border-0">
+                        {/* Name */}
                         <td className="px-4 py-4 font-medium">{item.name}</td>
 
+                        {/* Email */}
                         <td className="px-4 py-4 text-muted-foreground">
                           {item.email}
                         </td>
 
+                        {/* Phone */}
                         <td className="px-4 py-4 text-muted-foreground">
                           {item.phone}
                         </td>
 
+                        {/* Role */}
                         <td className="px-4 py-4">
                           <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
                             {item.role}
                           </span>
                         </td>
 
+                        {/* Status */}
                         <td className="px-4 py-4">
                           <span
                             className={`rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -231,6 +245,7 @@ export default function AdminUsersPage() {
                           </span>
                         </td>
 
+                        {/* Action */}
                         <td className="px-4 py-4 text-right">
                           {isAdmin ? (
                             <span className="text-xs text-muted-foreground">

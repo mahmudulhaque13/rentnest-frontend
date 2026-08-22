@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import {
   getAllAdminRentalRequests,
@@ -22,8 +23,7 @@ export default function AdminRentalRequestsPage() {
   const { user, loading: authLoading } = useAuth();
 
   const [requests, setRequests] = useState<IAdminRentalRequest[]>([]);
-
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -32,9 +32,18 @@ export default function AdminRentalRequestsPage() {
     }
 
     const loadRentalRequests = async () => {
+      setLoading(true);
+      setError("");
+
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
+        const message = "Please login again.";
+
+        setError(message);
+        toast.error(message);
+        setLoading(false);
+
         return;
       }
 
@@ -43,11 +52,13 @@ export default function AdminRentalRequestsPage() {
 
         setRequests(result);
       } catch (error) {
-        setError(
+        const message =
           error instanceof Error
             ? error.message
-            : "Failed to load rental requests",
-        );
+            : "Failed to load rental requests";
+
+        setError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -116,6 +127,7 @@ export default function AdminRentalRequestsPage() {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Rental Request Management</h1>
 
@@ -124,6 +136,7 @@ export default function AdminRentalRequestsPage() {
         </p>
       </div>
 
+      {/* Error */}
       {error && (
         <Card className="mb-6">
           <CardContent className="py-4 text-sm text-destructive">
@@ -225,12 +238,15 @@ export default function AdminRentalRequestsPage() {
 
                     {/* Status */}
                     <span
-                      className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusStyles[request.status]}`}
+                      className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                        statusStyles[request.status]
+                      }`}
                     >
                       {request.status}
                     </span>
                   </div>
 
+                  {/* Request Details */}
                   <div className="mt-5 grid gap-4 border-t pt-5 sm:grid-cols-2 lg:grid-cols-4">
                     {/* Tenant */}
                     <div>

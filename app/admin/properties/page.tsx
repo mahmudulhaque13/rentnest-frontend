@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { getAllAdminProperties, type IAdminProperty } from "@/services/admin";
 
@@ -12,7 +13,7 @@ export default function AdminPropertiesPage() {
   const { user, loading: authLoading } = useAuth();
 
   const [properties, setProperties] = useState<IAdminProperty[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -21,9 +22,18 @@ export default function AdminPropertiesPage() {
     }
 
     const loadProperties = async () => {
+      setLoading(true);
+      setError("");
+
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
+        const message = "Please login again.";
+
+        setError(message);
+        toast.error(message);
+        setLoading(false);
+
         return;
       }
 
@@ -32,9 +42,11 @@ export default function AdminPropertiesPage() {
 
         setProperties(result);
       } catch (error) {
-        setError(
-          error instanceof Error ? error.message : "Failed to load properties",
-        );
+        const message =
+          error instanceof Error ? error.message : "Failed to load properties";
+
+        setError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -56,7 +68,9 @@ export default function AdminPropertiesPage() {
               <Card key={item}>
                 <CardContent className="space-y-4 py-6">
                   <div className="h-6 w-3/4 animate-pulse rounded bg-muted" />
+
                   <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+
                   <div className="h-20 animate-pulse rounded bg-muted" />
                 </CardContent>
               </Card>
@@ -101,6 +115,7 @@ export default function AdminPropertiesPage() {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Property Management</h1>
 
@@ -109,6 +124,7 @@ export default function AdminPropertiesPage() {
         </p>
       </div>
 
+      {/* Error */}
       {error && (
         <Card className="mb-6">
           <CardContent className="py-4 text-sm text-destructive">
@@ -117,6 +133,7 @@ export default function AdminPropertiesPage() {
         </Card>
       )}
 
+      {/* Properties */}
       <Card>
         <CardHeader>
           <CardTitle>All Properties ({properties.length})</CardTitle>
@@ -155,6 +172,7 @@ export default function AdminPropertiesPage() {
                 <tbody>
                   {properties.map((property) => (
                     <tr key={property.id} className="border-b last:border-0">
+                      {/* Property */}
                       <td className="px-4 py-4">
                         <div>
                           <p className="font-medium">{property.title}</p>
@@ -165,6 +183,7 @@ export default function AdminPropertiesPage() {
                         </div>
                       </td>
 
+                      {/* Landlord */}
                       <td className="px-4 py-4">
                         <div>
                           <p className="font-medium">
@@ -177,12 +196,14 @@ export default function AdminPropertiesPage() {
                         </div>
                       </td>
 
+                      {/* Category */}
                       <td className="px-4 py-4">
                         <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
                           {property.category.name}
                         </span>
                       </td>
 
+                      {/* Location */}
                       <td className="px-4 py-4">
                         <p>{property.city}</p>
 
@@ -191,6 +212,7 @@ export default function AdminPropertiesPage() {
                         </p>
                       </td>
 
+                      {/* Rent */}
                       <td className="px-4 py-4 font-medium">
                         ৳{property.rent.toLocaleString()}
                         <span className="ml-1 text-xs font-normal text-muted-foreground">
@@ -198,6 +220,7 @@ export default function AdminPropertiesPage() {
                         </span>
                       </td>
 
+                      {/* Rating */}
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-1">
                           <span className="font-medium">
@@ -208,6 +231,7 @@ export default function AdminPropertiesPage() {
                         </div>
                       </td>
 
+                      {/* Status */}
                       <td className="px-4 py-4">
                         <span
                           className={`rounded-full px-2.5 py-1 text-xs font-medium ${
