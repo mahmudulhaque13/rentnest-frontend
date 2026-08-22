@@ -1,9 +1,24 @@
 import type { IProperty, IPropertyResponse } from "@/types/property.types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = "/api";
+
+const SERVER_API_URL =
+  process.env.BACKEND_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:5000/api";
+
+const getApiUrl = () => {
+  if (typeof window === "undefined") {
+    return SERVER_API_URL;
+  }
+
+  return API_URL;
+};
 
 export const getProperties = async (): Promise<IPropertyResponse> => {
-  const response = await fetch(`${API_URL}/properties`);
+  const response = await fetch(`${getApiUrl()}/properties`, {
+    cache: "no-store",
+  });
 
   if (!response.ok) {
     throw new Error("Failed to fetch properties");
@@ -13,7 +28,9 @@ export const getProperties = async (): Promise<IPropertyResponse> => {
 };
 
 export const getPropertyById = async (id: string): Promise<IProperty> => {
-  const response = await fetch(`${API_URL}/properties/${id}`);
+  const response = await fetch(`${getApiUrl()}/properties/${id}`, {
+    cache: "no-store",
+  });
 
   if (!response.ok) {
     throw new Error("Failed to fetch property");
@@ -63,6 +80,7 @@ export const getMyProperties = async (accessToken: string) => {
     headers: {
       Authorization: accessToken,
     },
+    cache: "no-store",
   });
 
   const result = await response.json();

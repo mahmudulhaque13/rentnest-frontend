@@ -1,9 +1,11 @@
 import { ICategory } from "@/types/category.types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = "/api";
 
 export const getCategories = async (): Promise<ICategory[]> => {
-  const response = await fetch(`${API_URL}/categories`);
+  const response = await fetch(`${API_URL}/categories`, {
+    cache: "no-store",
+  });
 
   const result = await response.json();
 

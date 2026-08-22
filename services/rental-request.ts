@@ -3,12 +3,12 @@ import type {
   IRentalRequest,
 } from "@/types/rental-request.types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = "/api";
 
 export const createRentalRequest = async (
   payload: ICreateRentalRequest,
   accessToken: string,
-) => {
+): Promise<IRentalRequest> => {
   const response = await fetch(`${API_URL}/rental-requests`, {
     method: "POST",
     headers: {
@@ -24,7 +24,7 @@ export const createRentalRequest = async (
     throw new Error(result.message || "Failed to create rental request");
   }
 
-  return result;
+  return result.data;
 };
 
 export const getMyRentalRequests = async (
@@ -34,7 +34,9 @@ export const getMyRentalRequests = async (
     method: "GET",
     headers: {
       Authorization: accessToken,
+      "Cache-Control": "no-cache",
     },
+    cache: "no-store",
   });
 
   const result = await response.json();
@@ -69,11 +71,12 @@ export const cancelRentalRequest = async (
 export const getLandlordRentalRequests = async (
   accessToken: string,
 ): Promise<IRentalRequest[]> => {
-  const response = await fetch(`${API_URL}/rental-requests/landlord`, {
+  const response = await fetch(`${API_URL}/rental-requests/landlord-requests`, {
     method: "GET",
     headers: {
       Authorization: accessToken,
     },
+    cache: "no-store",
   });
 
   const result = await response.json();
@@ -105,7 +108,7 @@ export const approveRentalRequest = async (
     throw new Error(result.message || "Failed to approve rental request");
   }
 
-  return result;
+  return result.data;
 };
 
 export const rejectRentalRequest = async (
@@ -128,5 +131,5 @@ export const rejectRentalRequest = async (
     throw new Error(result.message || "Failed to reject rental request");
   }
 
-  return result;
+  return result.data;
 };

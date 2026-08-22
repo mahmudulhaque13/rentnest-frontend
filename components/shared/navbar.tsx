@@ -15,7 +15,9 @@ export function Navbar() {
 
   const handleLogout = async () => {
     setMobileMenuOpen(false);
+
     await logout();
+
     router.push("/");
     router.refresh();
   };
@@ -35,7 +37,7 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden items-center gap-8 md:flex">
-            {/* Common */}
+            {/* Common Navigation */}
             <Link
               href="/"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary"
@@ -50,7 +52,7 @@ export function Navbar() {
               Properties
             </Link>
 
-            {/* Tenant */}
+            {/* Tenant Navigation */}
             {user?.role === "TENANT" && (
               <>
                 <Link
@@ -69,7 +71,7 @@ export function Navbar() {
               </>
             )}
 
-            {/* Landlord */}
+            {/* Landlord Navigation */}
             {user?.role === "LANDLORD" && (
               <>
                 <Link
@@ -95,7 +97,7 @@ export function Navbar() {
               </>
             )}
 
-            {/* Admin */}
+            {/* Admin Navigation */}
             {user?.role === "ADMIN" && (
               <>
                 <Link
@@ -129,29 +131,43 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Desktop Auth */}
+          {/* Desktop Authentication */}
           <div className="hidden items-center gap-3 md:flex">
             {loading ? (
               <span className="text-sm text-muted-foreground">Loading...</span>
             ) : user ? (
               <>
+                {/* User Information */}
                 <div className="text-right">
                   <p className="text-sm font-medium">{user.email}</p>
 
                   <p className="text-xs text-muted-foreground">{user.role}</p>
                 </div>
 
+                {/* Logout */}
                 <Button variant="outline" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>
               </>
             ) : (
-              <Link
-                href="/auth/login"
-                className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                Login
-              </Link>
+              /* Guest Authentication */
+              <div className="flex items-center gap-2">
+                {/* Login */}
+                <Link
+                  href="/auth/login"
+                  className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  Login
+                </Link>
+
+                {/* Register */}
+                <Link
+                  href="/auth/register"
+                  className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  Register
+                </Link>
+              </div>
             )}
           </div>
 
@@ -187,7 +203,7 @@ export function Navbar() {
         {mobileMenuOpen && (
           <div className="border-t border-border py-4 md:hidden">
             <div className="flex flex-col gap-1">
-              {/* Common */}
+              {/* Common Navigation */}
               <Link
                 href="/"
                 onClick={closeMobileMenu}
@@ -204,7 +220,7 @@ export function Navbar() {
                 Properties
               </Link>
 
-              {/* Tenant */}
+              {/* Tenant Navigation */}
               {user?.role === "TENANT" && (
                 <>
                   <Link
@@ -225,7 +241,7 @@ export function Navbar() {
                 </>
               )}
 
-              {/* Landlord */}
+              {/* Landlord Navigation */}
               {user?.role === "LANDLORD" && (
                 <>
                   <Link
@@ -254,7 +270,7 @@ export function Navbar() {
                 </>
               )}
 
-              {/* Admin */}
+              {/* Admin Navigation */}
               {user?.role === "ADMIN" && (
                 <>
                   <Link
@@ -291,7 +307,7 @@ export function Navbar() {
                 </>
               )}
 
-              {/* Mobile Auth */}
+              {/* Mobile Authentication */}
               <div className="mt-3 border-t border-border pt-3">
                 {loading ? (
                   <p className="px-3 py-2 text-sm text-muted-foreground">
@@ -299,6 +315,7 @@ export function Navbar() {
                   </p>
                 ) : user ? (
                   <div className="space-y-3 px-3">
+                    {/* User Information */}
                     <div>
                       <p className="truncate text-sm font-medium">
                         {user.email}
@@ -309,6 +326,7 @@ export function Navbar() {
                       </p>
                     </div>
 
+                    {/* Logout */}
                     <Button
                       variant="outline"
                       className="w-full"
@@ -318,13 +336,26 @@ export function Navbar() {
                     </Button>
                   </div>
                 ) : (
-                  <Link
-                    href="/auth/login"
-                    onClick={closeMobileMenu}
-                    className="mx-3 inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                  >
-                    Login
-                  </Link>
+                  /* Mobile Guest Authentication */
+                  <div className="flex gap-2 px-3">
+                    {/* Login */}
+                    <Link
+                      href="/auth/login"
+                      onClick={closeMobileMenu}
+                      className="inline-flex h-9 flex-1 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    >
+                      Login
+                    </Link>
+
+                    {/* Register */}
+                    <Link
+                      href="/auth/register"
+                      onClick={closeMobileMenu}
+                      className="inline-flex h-9 flex-1 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    >
+                      Register
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>

@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = "/api";
 
 export interface ICheckoutResponse {
   sessionId: string;
@@ -14,8 +14,10 @@ export interface IPayment {
   status: "PENDING" | "PAID" | "FAILED";
   paidAt?: string | null;
   createdAt: string;
+
   rentalRequest: {
     id: string;
+
     property: {
       id: string;
       title: string;
@@ -30,15 +32,18 @@ export interface IPayment {
 export interface ILandlordEarnings {
   totalEarnings: number;
   totalPayments: number;
+
   payments: Array<
     IPayment & {
       rentalRequest: {
         id: string;
+
         tenant: {
           id: string;
           name: string;
           email: string;
         };
+
         property: {
           id: string;
           title: string;
@@ -82,6 +87,7 @@ export const getMyPayments = async (
     headers: {
       Authorization: accessToken,
     },
+    cache: "no-store",
   });
 
   const result = await response.json();
@@ -100,6 +106,7 @@ export const getLandlordEarnings = async (
     headers: {
       Authorization: accessToken,
     },
+    cache: "no-store",
   });
 
   const result = await response.json();

@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = "/api";
 
 export interface IReview {
   id: string;
@@ -8,6 +8,7 @@ export interface IReview {
   comment: string;
   createdAt: string;
   updatedAt: string;
+
   tenant?: {
     id: string;
     name: string;
@@ -18,7 +19,9 @@ export interface IReview {
 export const getPropertyReviews = async (
   propertyId: string,
 ): Promise<IReview[]> => {
-  const response = await fetch(`${API_URL}/reviews/property/${propertyId}`);
+  const response = await fetch(`${API_URL}/reviews/property/${propertyId}`, {
+    cache: "no-store",
+  });
 
   const result = await response.json();
 

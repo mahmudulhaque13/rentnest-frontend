@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -72,10 +73,9 @@ export default function RentalRequestsPage() {
       }
     };
 
-    loadRequests();
+    void loadRequests();
   }, [user, authLoading]);
 
-  // Cancel Rental Request
   const handleCancel = async (requestId: string) => {
     const accessToken = localStorage.getItem("accessToken");
 
@@ -104,7 +104,6 @@ export default function RentalRequestsPage() {
     }
   };
 
-  // Stripe Payment
   const handlePayment = async (requestId: string) => {
     const accessToken = localStorage.getItem("accessToken");
 
@@ -120,10 +119,9 @@ export default function RentalRequestsPage() {
       const result = await createCheckoutSession(requestId, accessToken);
 
       if (!result.checkoutUrl) {
-        throw new Error("Checkout URL was not generated");
+        throw new Error("Checkout URL was not returned");
       }
 
-      // Redirect to Stripe Checkout
       window.location.href = result.checkoutUrl;
     } catch (error) {
       setError(
@@ -134,7 +132,6 @@ export default function RentalRequestsPage() {
     }
   };
 
-  // Loading
   if (authLoading || loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -145,7 +142,6 @@ export default function RentalRequestsPage() {
     );
   }
 
-  // Not logged in
   if (!user) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -169,7 +165,6 @@ export default function RentalRequestsPage() {
     );
   }
 
-  // Tenant only
   if (user.role !== "TENANT") {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -217,7 +212,7 @@ export default function RentalRequestsPage() {
             </p>
 
             <Link
-              href="/"
+              href="/properties"
               className="mt-5 inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               Browse Properties
@@ -226,117 +221,147 @@ export default function RentalRequestsPage() {
         </Card>
       )}
 
-      {/* Rental Requests */}
+      {/* Request Cards */}
       <div className="grid gap-6 md:grid-cols-2">
-        {requests.map((request) => (
-          <Card key={request.id} className="overflow-hidden">
-            {/* Property Image */}
-            <div className="relative h-52 w-full overflow-hidden bg-muted">
-              {request.property.images?.[0] ? (
-                <img
+        {requests.map((request) => {
+          const isPaid = request.payment?.status === "PAID";
+
+          const canPay = request.status === "APPROVED" && !isPaid;
+
+          return (
+            <Card key={request.id} className="overflow-hidden">
+              {/* Property Image */}
+              <div className="relative h-52 w-full bg-muted">
+                <Image
                   src={request.property.images[0]}
                   alt={request.property.title}
-                  className="h-full w-full object-cover"
+                  fill
+                  className="object-cover"
                 />
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                  No image
-                </div>
-              )}
-            </div>
+              </div>
 
-            <CardHeader>
-              <div className="flex items-start justify-between gap-4">
+              <CardHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-xl">
+                      {request.property.title}
+                    </CardTitle>
+
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {request.property.address}, {request.property.city}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                      statusStyles[request.status]
+                    }`}
+                  >
+                    {request.status}
+                  </span>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                {/* Rent */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Monthly Rent
+                  </span>
+
+                  <span className="font-semibold">
+                    ৳{request.property.rent.toLocaleString()}
+                  </span>
+                </div>
+
+                {/* Move-in Date */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Move-in Date
+                  </span>
+
+                  <span className="font-medium">
+                    {new Date(request.moveInDate).toLocaleDateString()}
+                  </span>
+                </div>
+
+                {/* Message */}
                 <div>
-                  <CardTitle className="text-xl">
-                    {request.property.title}
-                  </CardTitle>
+                  <p className="text-sm font-medium">Your Message</p>
 
                   <p className="mt-1 text-sm text-muted-foreground">
-                    {request.property.address}, {request.property.city}
+                    {request.message || "No message provided."}
                   </p>
                 </div>
 
-                <span
-                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                    statusStyles[request.status]
-                  }`}
-                >
-                  {request.status}
-                </span>
-              </div>
-            </CardHeader>
+                {/* Payment Status */}
+                {request.status === "APPROVED" && request.payment && (
+                  <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
+                    <span className="text-sm text-muted-foreground">
+                      Payment
+                    </span>
 
-            <CardContent className="space-y-4">
-              {/* Monthly Rent */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Monthly Rent
-                </span>
-
-                <span className="font-semibold">
-                  ৳{request.property.rent.toLocaleString()}
-                </span>
-              </div>
-
-              {/* Move-in Date */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Move-in Date
-                </span>
-
-                <span className="font-medium">
-                  {new Date(request.moveInDate).toLocaleDateString()}
-                </span>
-              </div>
-
-              {/* Message */}
-              <div>
-                <p className="text-sm font-medium">Your Message</p>
-
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {request.message}
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-col gap-3 sm:flex-row">
-                {/* View Property */}
-                <Link
-                  href={`/properties/${request.property.id}`}
-                  className="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-                >
-                  View Property
-                </Link>
-
-                {/* Cancel */}
-                {request.status === "PENDING" && (
-                  <Button
-                    variant="destructive"
-                    className="flex-1"
-                    disabled={cancellingId === request.id}
-                    onClick={() => handleCancel(request.id)}
-                  >
-                    {cancellingId === request.id
-                      ? "Cancelling..."
-                      : "Cancel Request"}
-                  </Button>
+                    <span
+                      className={`text-sm font-semibold ${
+                        request.payment.status === "PAID"
+                          ? "text-green-600"
+                          : "text-yellow-600"
+                      }`}
+                    >
+                      {request.payment.status}
+                    </span>
+                  </div>
                 )}
 
-                {/* Pay Now */}
-                {request.status === "APPROVED" && (
-                  <Button
-                    className="flex-1"
-                    disabled={payingId === request.id}
-                    onClick={() => handlePayment(request.id)}
+                {/* Buttons */}
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    href={`/properties/${request.property.id}`}
+                    className="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                   >
-                    {payingId === request.id ? "Processing..." : "Pay Now"}
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                    View Property
+                  </Link>
+
+                  {/* Cancel Pending Request */}
+                  {request.status === "PENDING" && (
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      disabled={cancellingId === request.id}
+                      onClick={() => handleCancel(request.id)}
+                    >
+                      {cancellingId === request.id
+                        ? "Cancelling..."
+                        : "Cancel Request"}
+                    </Button>
+                  )}
+
+                  {/* Pay Now */}
+                  {canPay && (
+                    <Button
+                      className="flex-1"
+                      disabled={payingId === request.id}
+                      onClick={() => handlePayment(request.id)}
+                    >
+                      {payingId === request.id ? "Processing..." : "Pay Now"}
+                    </Button>
+                  )}
+
+                  {/* Already Paid */}
+                  {isPaid && (
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-green-300 text-green-700"
+                      disabled
+                    >
+                      Payment Completed
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </main>
   );

@@ -1,18 +1,32 @@
+export type RentalRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export interface ICreateRentalRequest {
   propertyId: string;
   moveInDate: string;
-  message: string;
+  message?: string;
 }
 
-export interface IRentalRequestCategory {
+export interface IRentalRequestPayment {
+  id: string;
+  amount: number;
+  transactionId: string;
+  paymentIntentId?: string | null;
+  provider: string;
+  status: "PENDING" | "PAID" | "FAILED";
+  paidAt?: string | null;
+  createdAt: string;
+}
+
+export interface IRentalRequestTenant {
   id: string;
   name: string;
+  email: string;
+  phone: string;
 }
 
 export interface IRentalRequestProperty {
   id: string;
   title: string;
-  slug: string;
   description: string;
   rent: number;
   bedrooms: number;
@@ -21,28 +35,39 @@ export interface IRentalRequestProperty {
   city: string;
   district: string;
   images: string[];
+  amenities: string[];
   status: string;
-  category?: IRentalRequestCategory;
-}
+  averageRating: number;
 
-export interface IRentalRequestTenant {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-}
+  category: {
+    id: string;
+    name: string;
+  };
 
-export type RentalRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+  landlord: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
+}
 
 export interface IRentalRequest {
   id: string;
-  propertyId: string;
-  tenantId: string;
   moveInDate: string;
-  message: string;
+  message: string | null;
   status: RentalRequestStatus;
-  createdAt: string;
-  updatedAt: string;
-  property: IRentalRequestProperty;
+
+  tenantId: string;
+
   tenant?: IRentalRequestTenant;
+
+  propertyId: string;
+
+  property: IRentalRequestProperty;
+
+  payment?: IRentalRequestPayment | null;
+
+  createdAt?: string;
+  updatedAt?: string;
 }

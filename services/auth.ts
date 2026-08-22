@@ -4,7 +4,7 @@ import type {
   IRegisterUser,
 } from "@/types/auth.types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = "/api";
 
 export const registerUser = async (payload: IRegisterUser) => {
   const response = await fetch(`${API_URL}/auth/register`, {
@@ -50,6 +50,7 @@ export const getMe = async (accessToken: string) => {
     headers: {
       Authorization: accessToken,
     },
+    cache: "no-store",
   });
 
   const result = await response.json();

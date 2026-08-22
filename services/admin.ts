@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = "/api";
 
 export interface IAdminUser {
   id: string;
@@ -75,6 +75,7 @@ export const getAllAdminUsers = async (
 ): Promise<IAdminUser[]> => {
   const response = await fetch(`${API_URL}/admin/users`, {
     headers: getAuthHeaders(accessToken),
+    cache: "no-store",
   });
 
   const result = await response.json();
@@ -100,6 +101,7 @@ export const updateAdminUserStatus = async (
     body: JSON.stringify({
       status,
     }),
+    cache: "no-store",
   });
 
   const result = await response.json();
@@ -116,6 +118,7 @@ export const getAllAdminProperties = async (
 ): Promise<IAdminProperty[]> => {
   const response = await fetch(`${API_URL}/admin/properties`, {
     headers: getAuthHeaders(accessToken),
+    cache: "no-store",
   });
 
   const result = await response.json();
@@ -132,6 +135,7 @@ export const getAllAdminRentalRequests = async (
 ): Promise<IAdminRentalRequest[]> => {
   const response = await fetch(`${API_URL}/admin/rental-requests`, {
     headers: getAuthHeaders(accessToken),
+    cache: "no-store",
   });
 
   const result = await response.json();
