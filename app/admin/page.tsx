@@ -15,6 +15,8 @@ import { useAuth } from "@/components/providers/auth-provider";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { Loading } from "@/components/shared/loading";
+
 export default function AdminDashboardPage() {
   const { user, loading: authLoading } = useAuth();
 
@@ -36,6 +38,9 @@ export default function AdminDashboardPage() {
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
+        setError("Please login again.");
+        setLoading(false);
+
         return;
       }
 
@@ -67,20 +72,7 @@ export default function AdminDashboardPage() {
   if (authLoading || loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="space-y-6">
-          <div className="h-10 w-64 animate-pulse rounded-md bg-muted" />
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((item) => (
-              <Card key={item}>
-                <CardContent className="space-y-3 py-6">
-                  <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-                  <div className="h-8 w-16 animate-pulse rounded bg-muted" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        <Loading text="Loading admin dashboard..." />
       </main>
     );
   }
@@ -116,6 +108,22 @@ export default function AdminDashboardPage() {
       </main>
     );
   }
+
+  const tenantCount = users.filter((item) => item.role === "TENANT").length;
+
+  const landlordCount = users.filter((item) => item.role === "LANDLORD").length;
+
+  const pendingCount = rentalRequests.filter(
+    (item) => item.status === "PENDING",
+  ).length;
+
+  const approvedCount = rentalRequests.filter(
+    (item) => item.status === "APPROVED",
+  ).length;
+
+  const rentedPropertiesCount = properties.filter(
+    (item) => item.status === "RENTED",
+  ).length;
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -159,9 +167,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
 
           <CardContent>
-            <p className="text-3xl font-bold">
-              {users.filter((item) => item.role === "TENANT").length}
-            </p>
+            <p className="text-3xl font-bold">{tenantCount}</p>
           </CardContent>
         </Card>
 
@@ -173,9 +179,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
 
           <CardContent>
-            <p className="text-3xl font-bold">
-              {users.filter((item) => item.role === "LANDLORD").length}
-            </p>
+            <p className="text-3xl font-bold">{landlordCount}</p>
           </CardContent>
         </Card>
 
@@ -214,12 +218,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
 
           <CardContent>
-            <p className="text-3xl font-bold text-yellow-600">
-              {
-                rentalRequests.filter((item) => item.status === "PENDING")
-                  .length
-              }
-            </p>
+            <p className="text-3xl font-bold text-yellow-600">{pendingCount}</p>
           </CardContent>
         </Card>
 
@@ -231,12 +230,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
 
           <CardContent>
-            <p className="text-3xl font-bold text-green-600">
-              {
-                rentalRequests.filter((item) => item.status === "APPROVED")
-                  .length
-              }
-            </p>
+            <p className="text-3xl font-bold text-green-600">{approvedCount}</p>
           </CardContent>
         </Card>
 
@@ -248,9 +242,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
 
           <CardContent>
-            <p className="text-3xl font-bold">
-              {properties.filter((item) => item.status === "RENTED").length}
-            </p>
+            <p className="text-3xl font-bold">{rentedPropertiesCount}</p>
           </CardContent>
         </Card>
       </div>
@@ -270,11 +262,8 @@ export default function AdminDashboardPage() {
                 <thead>
                   <tr className="border-b text-left">
                     <th className="px-3 py-3 font-medium">Name</th>
-
                     <th className="px-3 py-3 font-medium">Email</th>
-
                     <th className="px-3 py-3 font-medium">Role</th>
-
                     <th className="px-3 py-3 font-medium">Status</th>
                   </tr>
                 </thead>

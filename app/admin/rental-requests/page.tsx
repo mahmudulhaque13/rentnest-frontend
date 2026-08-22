@@ -12,6 +12,8 @@ import { useAuth } from "@/components/providers/auth-provider";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { Loading } from "@/components/shared/loading";
+
 const statusStyles: Record<IAdminRentalRequest["status"], string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
   APPROVED: "bg-green-100 text-green-700",
@@ -23,7 +25,7 @@ export default function AdminRentalRequestsPage() {
   const { user, loading: authLoading } = useAuth();
 
   const [requests, setRequests] = useState<IAdminRentalRequest[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -32,9 +34,6 @@ export default function AdminRentalRequestsPage() {
     }
 
     const loadRentalRequests = async () => {
-      setLoading(true);
-      setError("");
-
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
@@ -70,13 +69,7 @@ export default function AdminRentalRequestsPage() {
   if (authLoading || loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="space-y-6">
-          <div className="h-8 w-64 animate-pulse rounded bg-muted" />
-
-          <div className="h-12 animate-pulse rounded bg-muted" />
-
-          <div className="h-72 animate-pulse rounded bg-muted" />
-        </div>
+        <Loading text="Loading rental requests..." />
       </main>
     );
   }
@@ -238,9 +231,7 @@ export default function AdminRentalRequestsPage() {
 
                     {/* Status */}
                     <span
-                      className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                        statusStyles[request.status]
-                      }`}
+                      className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusStyles[request.status]}`}
                     >
                       {request.status}
                     </span>

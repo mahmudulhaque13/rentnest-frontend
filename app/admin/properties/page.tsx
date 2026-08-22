@@ -13,7 +13,7 @@ export default function AdminPropertiesPage() {
   const { user, loading: authLoading } = useAuth();
 
   const [properties, setProperties] = useState<IAdminProperty[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -22,9 +22,6 @@ export default function AdminPropertiesPage() {
     }
 
     const loadProperties = async () => {
-      setLoading(true);
-      setError("");
-
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
@@ -115,7 +112,6 @@ export default function AdminPropertiesPage() {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Property Management</h1>
 
@@ -124,7 +120,6 @@ export default function AdminPropertiesPage() {
         </p>
       </div>
 
-      {/* Error */}
       {error && (
         <Card className="mb-6">
           <CardContent className="py-4 text-sm text-destructive">
@@ -133,7 +128,6 @@ export default function AdminPropertiesPage() {
         </Card>
       )}
 
-      {/* Properties */}
       <Card>
         <CardHeader>
           <CardTitle>All Properties ({properties.length})</CardTitle>
@@ -154,17 +148,11 @@ export default function AdminPropertiesPage() {
                 <thead>
                   <tr className="border-b text-left">
                     <th className="px-4 py-3 font-medium">Property</th>
-
                     <th className="px-4 py-3 font-medium">Landlord</th>
-
                     <th className="px-4 py-3 font-medium">Category</th>
-
                     <th className="px-4 py-3 font-medium">Location</th>
-
                     <th className="px-4 py-3 font-medium">Rent</th>
-
                     <th className="px-4 py-3 font-medium">Rating</th>
-
                     <th className="px-4 py-3 font-medium">Status</th>
                   </tr>
                 </thead>
@@ -172,7 +160,6 @@ export default function AdminPropertiesPage() {
                 <tbody>
                   {properties.map((property) => (
                     <tr key={property.id} className="border-b last:border-0">
-                      {/* Property */}
                       <td className="px-4 py-4">
                         <div>
                           <p className="font-medium">{property.title}</p>
@@ -183,7 +170,6 @@ export default function AdminPropertiesPage() {
                         </div>
                       </td>
 
-                      {/* Landlord */}
                       <td className="px-4 py-4">
                         <div>
                           <p className="font-medium">
@@ -196,14 +182,12 @@ export default function AdminPropertiesPage() {
                         </div>
                       </td>
 
-                      {/* Category */}
                       <td className="px-4 py-4">
                         <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
                           {property.category.name}
                         </span>
                       </td>
 
-                      {/* Location */}
                       <td className="px-4 py-4">
                         <p>{property.city}</p>
 
@@ -212,7 +196,6 @@ export default function AdminPropertiesPage() {
                         </p>
                       </td>
 
-                      {/* Rent */}
                       <td className="px-4 py-4 font-medium">
                         ৳{property.rent.toLocaleString()}
                         <span className="ml-1 text-xs font-normal text-muted-foreground">
@@ -220,7 +203,6 @@ export default function AdminPropertiesPage() {
                         </span>
                       </td>
 
-                      {/* Rating */}
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-1">
                           <span className="font-medium">
@@ -231,7 +213,6 @@ export default function AdminPropertiesPage() {
                         </div>
                       </td>
 
-                      {/* Status */}
                       <td className="px-4 py-4">
                         <span
                           className={`rounded-full px-2.5 py-1 text-xs font-medium ${

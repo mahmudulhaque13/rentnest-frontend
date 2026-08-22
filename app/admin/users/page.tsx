@@ -15,11 +15,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 
+import { Loading } from "@/components/shared/loading";
+
 export default function AdminUsersPage() {
   const { user, loading: authLoading } = useAuth();
 
   const [users, setUsers] = useState<IAdminUser[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -29,9 +31,6 @@ export default function AdminUsersPage() {
     }
 
     const loadUsers = async () => {
-      setLoading(true);
-      setError("");
-
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
@@ -112,13 +111,7 @@ export default function AdminUsersPage() {
   if (authLoading || loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="space-y-4 py-8">
-            <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-
-            <div className="h-64 animate-pulse rounded bg-muted" />
-          </CardContent>
-        </Card>
+        <Loading text="Loading users..." />
       </main>
     );
   }
