@@ -10,7 +10,8 @@ import {
   rejectRentalRequest,
 } from "@/services/rental-request";
 
-import { useAuth } from "@/components/providers/auth-provider";
+import { RoleGuard } from "@/components/shared/role-guard";
+import { Loading } from "@/components/shared/loading";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -27,56 +28,59 @@ const statusStyles: Record<RentalRequestStatus, string> = {
   REJECTED: "bg-red-100 text-red-700",
 };
 
-export default function LandlordRentalRequestsPage() {
-  const { user, loading: authLoading } = useAuth();
-
+function LandlordRentalRequestsContent() {
   const [requests, setRequests] = useState<IRentalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionId, setActionId] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadRequests = async () => {
-      if (authLoading) {
-        return;
-      }
-
-      if (!user || user.role !== "LANDLORD") {
-        setLoading(false);
-        return;
-      }
-
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
-        const message = "Please login again.";
+        if (!cancelled) {
+          const message = "Please login again.";
 
-        setError(message);
-        toast.error(message);
+          setError(message);
+          toast.error(message);
+          setLoading(false);
+        }
 
-        setLoading(false);
         return;
       }
 
       try {
         const result = await getLandlordRentalRequests(accessToken);
 
-        setRequests(result);
+        if (!cancelled) {
+          setRequests(result);
+        }
       } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to load rental requests";
+        if (!cancelled) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Failed to load rental requests";
 
-        setError(message);
-        toast.error(message);
+          setError(message);
+          toast.error(message);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     void loadRequests();
-  }, [user, authLoading]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleApprove = async (requestId: string) => {
     const accessToken = localStorage.getItem("accessToken");
@@ -168,50 +172,17 @@ export default function LandlordRentalRequestsPage() {
     }
   };
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <p className="text-sm text-muted-foreground">
-          Loading rental requests...
-        </p>
-      </main>
-    );
-  }
-
-  if (!user) {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-10 text-center">
-            <h1 className="text-xl font-semibold">Login required</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Please login as a landlord.
-            </p>
-          </CardContent>
-        </Card>
-      </main>
-    );
-  }
-
-  if (user.role !== "LANDLORD") {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-10 text-center">
-            <h1 className="text-xl font-semibold">Landlord access only</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Only landlords can manage rental requests.
-            </p>
-          </CardContent>
-        </Card>
+        <Loading text="Loading rental requests..." />
       </main>
     );
   }
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Rental Requests</h1>
 
@@ -220,6 +191,7 @@ export default function LandlordRentalRequestsPage() {
         </p>
       </div>
 
+      {/* Error */}
       {error && (
         <Card className="mb-6">
           <CardContent className="py-4 text-sm text-destructive">
@@ -228,6 +200,7 @@ export default function LandlordRentalRequestsPage() {
         </Card>
       )}
 
+      {/* Empty State */}
       {requests.length === 0 && !error && (
         <Card>
           <CardContent className="py-12 text-center">
@@ -240,16 +213,24 @@ export default function LandlordRentalRequestsPage() {
         </Card>
       )}
 
+      {/* Rental Requests */}
       <div className="grid gap-6 md:grid-cols-2">
         {requests.map((request) => (
           <Card key={request.id} className="overflow-hidden">
+            {/* Property Image */}
             <div className="relative h-52 w-full bg-muted">
-              <Image
-                src={request.property.images[0]}
-                alt={request.property.title}
-                fill
-                className="object-cover"
-              />
+              {request.property.images?.[0] ? (
+                <Image
+                  src={request.property.images[0]}
+                  alt={request.property.title}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                  No image
+                </div>
+              )}
             </div>
 
             <CardHeader>
@@ -275,17 +256,20 @@ export default function LandlordRentalRequestsPage() {
             </CardHeader>
 
             <CardContent className="space-y-4">
+              {/* Tenant */}
               <div>
                 <p className="text-sm font-medium">Tenant</p>
 
                 <div className="mt-1 text-sm text-muted-foreground">
                   <p>{request.tenant?.name}</p>
+
                   <p>{request.tenant?.email}</p>
 
                   {request.tenant?.phone && <p>{request.tenant.phone}</p>}
                 </div>
               </div>
 
+              {/* Monthly Rent */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
                   Monthly Rent
@@ -296,6 +280,7 @@ export default function LandlordRentalRequestsPage() {
                 </span>
               </div>
 
+              {/* Move-in Date */}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
                   Move-in Date
@@ -306,6 +291,7 @@ export default function LandlordRentalRequestsPage() {
                 </span>
               </div>
 
+              {/* Tenant Message */}
               <div>
                 <p className="text-sm font-medium">Tenant Message</p>
 
@@ -314,6 +300,7 @@ export default function LandlordRentalRequestsPage() {
                 </p>
               </div>
 
+              {/* Actions */}
               {request.status === "PENDING" && (
                 <div className="flex gap-3 pt-2">
                   <Button
@@ -339,5 +326,17 @@ export default function LandlordRentalRequestsPage() {
         ))}
       </div>
     </main>
+  );
+}
+
+export default function LandlordRentalRequestsPage() {
+  return (
+    <RoleGuard
+      allowedRole="LANDLORD"
+      loadingText="Checking landlord access..."
+      accessMessage="Only landlords can manage rental requests."
+    >
+      <LandlordRentalRequestsContent />
+    </RoleGuard>
   );
 }

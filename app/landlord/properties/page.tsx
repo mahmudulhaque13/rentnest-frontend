@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { deleteProperty, getMyProperties } from "@/services/property";
-import { useAuth } from "@/components/providers/auth-provider";
 
+import { RoleGuard } from "@/components/shared/role-guard";
 import { Loading } from "@/components/shared/loading";
 
 import {
@@ -336,31 +336,13 @@ function PropertiesContent() {
 }
 
 export default function MyPropertiesPage() {
-  const { user, loading: authLoading } = useAuth();
-
-  if (authLoading) {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Loading text="Loading authentication..." />
-      </main>
-    );
-  }
-
-  if (!user || user.role !== "LANDLORD") {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-10 text-center">
-            <h1 className="text-xl font-semibold">Landlord access only</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Only landlords can manage properties.
-            </p>
-          </CardContent>
-        </Card>
-      </main>
-    );
-  }
-
-  return <PropertiesContent />;
+  return (
+    <RoleGuard
+      allowedRole="LANDLORD"
+      loadingText="Checking landlord access..."
+      accessMessage="Only landlords can manage properties."
+    >
+      <PropertiesContent />
+    </RoleGuard>
+  );
 }

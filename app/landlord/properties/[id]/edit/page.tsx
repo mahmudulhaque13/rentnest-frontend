@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { getPropertyById, updateProperty } from "@/services/property";
 import { getCategories } from "@/services/category";
 
+import { RoleGuard } from "@/components/shared/role-guard";
 import { Loading } from "@/components/shared/loading";
 
 import { Button } from "@/components/ui/button";
@@ -20,11 +21,8 @@ interface ICategory {
   name: string;
 }
 
-export default function EditPropertyPage() {
-  const params = useParams();
+function EditPropertyContent({ id }: { id: string }) {
   const router = useRouter();
-
-  const id = params.id as string;
 
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,10 +42,16 @@ export default function EditPropertyPage() {
   const [categoryId, setCategoryId] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadData = async () => {
       try {
-        const property = await getPropertyById(id);
-        const categoryData = await getCategories();
+        const [property, categoryData] = await Promise.all([
+          getPropertyById(id),
+          getCategories(),
+        ]);
+
+        if (cancelled) return;
 
         setCategories(categoryData);
 
@@ -63,34 +67,57 @@ export default function EditPropertyPage() {
         setAmenities(property.amenities?.join(", ") || "");
         setCategoryId(property.category.id);
       } catch (error) {
+        if (cancelled) return;
+
         const message =
           error instanceof Error ? error.message : "Failed to load property";
 
         setError(message);
         toast.error(message);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     if (id) {
       void loadData();
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     setError("");
+
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (!accessToken) {
+      const message = "Please login again.";
+
+      setError(message);
+      toast.error(message);
+
+      return;
+    }
+
+    if (!categoryId) {
+      const message = "Please select a category.";
+
+      setError(message);
+      toast.error(message);
+
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      const accessToken = localStorage.getItem("accessToken");
-
-      if (!accessToken) {
-        throw new Error("Please login again.");
-      }
-
       await updateProperty(
         id,
         {
@@ -129,7 +156,7 @@ export default function EditPropertyPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-4 py-10">
+      <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
         <Loading text="Loading property..." />
       </main>
     );
@@ -318,5 +345,37 @@ export default function EditPropertyPage() {
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+export default function EditPropertyPage() {
+  const params = useParams();
+
+  const id = params.id as string;
+
+  if (!id) {
+    return (
+      <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
+        <Card>
+          <CardContent className="py-10 text-center">
+            <h1 className="text-xl font-semibold">Invalid property</h1>
+
+            <p className="mt-2 text-sm text-muted-foreground">
+              Property ID is missing.
+            </p>
+          </CardContent>
+        </Card>
+      </main>
+    );
+  }
+
+  return (
+    <RoleGuard
+      allowedRole="LANDLORD"
+      loadingText="Checking landlord access..."
+      accessMessage="Only landlords can edit properties."
+    >
+      <EditPropertyContent id={id} />
+    </RoleGuard>
   );
 }

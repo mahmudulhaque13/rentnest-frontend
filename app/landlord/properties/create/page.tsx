@@ -6,19 +6,18 @@ import { toast } from "sonner";
 
 import { createProperty } from "@/services/property";
 import { getCategories } from "@/services/category";
-import { useAuth } from "@/components/providers/auth-provider";
+
+import { RoleGuard } from "@/components/shared/role-guard";
+import { Loading } from "@/components/shared/loading";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { Loading } from "@/components/shared/loading";
-
 import type { ICategory } from "@/types/category.types";
 
-export default function CreatePropertyPage() {
+function CreatePropertyContent() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
 
   const [categories, setCategories] = useState<ICategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -39,38 +38,43 @@ export default function CreatePropertyPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadCategories = async () => {
       try {
         const result = await getCategories();
 
-        setCategories(result);
+        if (!cancelled) {
+          setCategories(result);
+        }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to load categories";
+        if (!cancelled) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Failed to load categories";
 
-        setError(message);
-        toast.error(message);
+          setError(message);
+          toast.error(message);
+        }
       } finally {
-        setCategoriesLoading(false);
+        if (!cancelled) {
+          setCategoriesLoading(false);
+        }
       }
     };
 
     void loadCategories();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     setError("");
-
-    if (!user || user.role !== "LANDLORD") {
-      const message = "Only landlords can create properties.";
-
-      setError(message);
-      toast.error(message);
-
-      return;
-    }
 
     const accessToken = localStorage.getItem("accessToken");
 
@@ -146,30 +150,17 @@ export default function CreatePropertyPage() {
     }
   };
 
-  if (authLoading) {
+  if (categoriesLoading) {
     return (
       <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-        <Loading text="Loading authentication..." />
-      </main>
-    );
-  }
-
-  if (!user || user.role !== "LANDLORD") {
-    return (
-      <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="rounded-xl border p-6 text-center">
-          <h1 className="text-xl font-semibold">Landlord access only</h1>
-
-          <p className="mt-2 text-sm text-muted-foreground">
-            Only landlords can create properties.
-          </p>
-        </div>
+        <Loading text="Loading categories..." />
       </main>
     );
   }
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Create Property</h1>
 
@@ -236,15 +227,10 @@ export default function CreatePropertyPage() {
               id="category"
               value={categoryId}
               onChange={(event) => setCategoryId(event.target.value)}
-              disabled={categoriesLoading}
               required
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/50"
             >
-              <option value="">
-                {categoriesLoading
-                  ? "Loading categories..."
-                  : "Select category"}
-              </option>
+              <option value="">Select category</option>
 
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
@@ -366,14 +352,22 @@ export default function CreatePropertyPage() {
         )}
 
         {/* Submit */}
-        <Button
-          type="submit"
-          disabled={loading || categoriesLoading}
-          className="w-full"
-        >
+        <Button type="submit" disabled={loading} className="w-full">
           {loading ? "Creating Property..." : "Create Property"}
         </Button>
       </form>
     </main>
+  );
+}
+
+export default function CreatePropertyPage() {
+  return (
+    <RoleGuard
+      allowedRole="LANDLORD"
+      loadingText="Checking landlord access..."
+      accessMessage="Only landlords can create properties."
+    >
+      <CreatePropertyContent />
+    </RoleGuard>
   );
 }

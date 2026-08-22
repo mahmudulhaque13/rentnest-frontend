@@ -6,11 +6,10 @@ import { toast } from "sonner";
 
 import { getMyPayments, type IPayment } from "@/services/payment";
 
-import { useAuth } from "@/components/providers/auth-provider";
+import { RoleGuard } from "@/components/shared/role-guard";
+import { Loading } from "@/components/shared/loading";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-import { Loading } from "@/components/shared/loading";
 
 const statusStyles: Record<IPayment["status"], string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
@@ -18,31 +17,25 @@ const statusStyles: Record<IPayment["status"], string> = {
   FAILED: "bg-red-100 text-red-700",
 };
 
-export default function MyPaymentsPage() {
-  const { user, loading: authLoading } = useAuth();
-
+function PaymentsContent() {
   const [payments, setPayments] = useState<IPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-
-    if (!user || user.role !== "TENANT") {
-      return;
-    }
+    let cancelled = false;
 
     const loadPayments = async () => {
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
-        const message = "Please login again.";
+        if (!cancelled) {
+          const message = "Please login again.";
 
-        setError(message);
-        setLoading(false);
-        toast.error(message);
+          setError(message);
+          setLoading(false);
+          toast.error(message);
+        }
 
         return;
       }
@@ -50,64 +43,35 @@ export default function MyPaymentsPage() {
       try {
         const result = await getMyPayments(accessToken);
 
-        setPayments(result);
+        if (!cancelled) {
+          setPayments(result);
+        }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to load payments";
+        if (!cancelled) {
+          const message =
+            error instanceof Error ? error.message : "Failed to load payments";
 
-        setError(message);
-        toast.error(message);
+          setError(message);
+          toast.error(message);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     void loadPayments();
-  }, [user, authLoading]);
 
-  if (authLoading || loading) {
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <Loading text="Loading payments..." />
-      </main>
-    );
-  }
-
-  if (!user) {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-10 text-center">
-            <h1 className="text-xl font-semibold">Login required</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Please login to view your payments.
-            </p>
-
-            <Link
-              href="/auth/login"
-              className="mt-5 inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Login
-            </Link>
-          </CardContent>
-        </Card>
-      </main>
-    );
-  }
-
-  if (user.role !== "TENANT") {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-10 text-center">
-            <h1 className="text-xl font-semibold">Tenant access only</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Payment history is available for tenants only.
-            </p>
-          </CardContent>
-        </Card>
       </main>
     );
   }
@@ -267,5 +231,17 @@ export default function MyPaymentsPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function MyPaymentsPage() {
+  return (
+    <RoleGuard
+      allowedRole="TENANT"
+      loadingText="Checking tenant access..."
+      accessMessage="Only tenants can view payment history."
+    >
+      <PaymentsContent />
+    </RoleGuard>
   );
 }

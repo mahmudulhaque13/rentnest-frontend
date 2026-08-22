@@ -12,7 +12,8 @@ import {
 
 import { createCheckoutSession } from "@/services/payment";
 
-import { useAuth } from "@/components/providers/auth-provider";
+import { RoleGuard } from "@/components/shared/role-guard";
+import { Loading } from "@/components/shared/loading";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -29,9 +30,7 @@ const statusStyles: Record<RentalRequestStatus, string> = {
   REJECTED: "bg-red-100 text-red-700",
 };
 
-export default function RentalRequestsPage() {
-  const { user, loading: authLoading } = useAuth();
-
+function RentalRequestsContent() {
   const [requests, setRequests] = useState<IRentalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -40,47 +39,52 @@ export default function RentalRequestsPage() {
   const [payingId, setPayingId] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadRequests = async () => {
-      if (authLoading) {
-        return;
-      }
-
-      if (!user || user.role !== "TENANT") {
-        setLoading(false);
-        return;
-      }
-
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
-        const message = "Please login again.";
+        if (!cancelled) {
+          const message = "Please login again.";
 
-        setError(message);
-        toast.error(message);
+          setError(message);
+          toast.error(message);
+          setLoading(false);
+        }
 
-        setLoading(false);
         return;
       }
 
       try {
         const result = await getMyRentalRequests(accessToken);
 
-        setRequests(result);
+        if (!cancelled) {
+          setRequests(result);
+        }
       } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to load rental requests";
+        if (!cancelled) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Failed to load rental requests";
 
-        setError(message);
-        toast.error(message);
+          setError(message);
+          toast.error(message);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     void loadRequests();
-  }, [user, authLoading]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleCancel = async (requestId: string) => {
     const accessToken = localStorage.getItem("accessToken");
@@ -154,51 +158,10 @@ export default function RentalRequestsPage() {
     }
   };
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <p className="text-sm text-muted-foreground">
-          Loading rental requests...
-        </p>
-      </main>
-    );
-  }
-
-  if (!user) {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-10 text-center">
-            <h1 className="text-xl font-semibold">Login required</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Please login to view your rental requests.
-            </p>
-
-            <Link
-              href="/auth/login"
-              className="mt-5 inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Login
-            </Link>
-          </CardContent>
-        </Card>
-      </main>
-    );
-  }
-
-  if (user.role !== "TENANT") {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-10 text-center">
-            <h1 className="text-xl font-semibold">Tenant access only</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Rental requests are available for tenants only.
-            </p>
-          </CardContent>
-        </Card>
+        <Loading text="Loading rental requests..." />
       </main>
     );
   }
@@ -244,147 +207,167 @@ export default function RentalRequestsPage() {
       )}
 
       {/* Request Cards */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {requests.map((request) => {
-          const isPaid = request.payment?.status === "PAID";
+      {requests.length > 0 && (
+        <div className="grid gap-6 md:grid-cols-2">
+          {requests.map((request) => {
+            const isPaid = request.payment?.status === "PAID";
 
-          const canPay = request.status === "APPROVED" && !isPaid;
+            const canPay = request.status === "APPROVED" && !isPaid;
 
-          return (
-            <Card key={request.id} className="overflow-hidden">
-              {/* Property Image */}
-              <div className="relative h-52 w-full bg-muted">
-                <Image
-                  src={request.property.images[0]}
-                  alt={request.property.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
+            return (
+              <Card key={request.id} className="overflow-hidden">
+                {/* Property Image */}
+                <div className="relative h-52 w-full bg-muted">
+                  {request.property.images?.[0] ? (
+                    <Image
+                      src={request.property.images[0]}
+                      alt={request.property.title}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                      No image
+                    </div>
+                  )}
+                </div>
 
-              <CardHeader>
-                <div className="flex items-start justify-between gap-4">
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <CardTitle className="text-xl">
+                        {request.property.title}
+                      </CardTitle>
+
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {request.property.address}, {request.property.city}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                        statusStyles[request.status]
+                      }`}
+                    >
+                      {request.status}
+                    </span>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  {/* Rent */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      Monthly Rent
+                    </span>
+
+                    <span className="font-semibold">
+                      ৳{request.property.rent.toLocaleString()}
+                    </span>
+                  </div>
+
+                  {/* Move-in Date */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      Move-in Date
+                    </span>
+
+                    <span className="font-medium">
+                      {new Date(request.moveInDate).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  {/* Message */}
                   <div>
-                    <CardTitle className="text-xl">
-                      {request.property.title}
-                    </CardTitle>
+                    <p className="text-sm font-medium">Your Message</p>
 
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {request.property.address}, {request.property.city}
+                      {request.message || "No message provided."}
                     </p>
                   </div>
 
-                  <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                      statusStyles[request.status]
-                    }`}
-                  >
-                    {request.status}
-                  </span>
-                </div>
-              </CardHeader>
+                  {/* Payment Status */}
+                  {request.status === "APPROVED" && request.payment && (
+                    <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
+                      <span className="text-sm text-muted-foreground">
+                        Payment
+                      </span>
 
-              <CardContent className="space-y-4">
-                {/* Rent */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Monthly Rent
-                  </span>
+                      <span
+                        className={`text-sm font-semibold ${
+                          request.payment.status === "PAID"
+                            ? "text-green-600"
+                            : "text-yellow-600"
+                        }`}
+                      >
+                        {request.payment.status}
+                      </span>
+                    </div>
+                  )}
 
-                  <span className="font-semibold">
-                    ৳{request.property.rent.toLocaleString()}
-                  </span>
-                </div>
-
-                {/* Move-in Date */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Move-in Date
-                  </span>
-
-                  <span className="font-medium">
-                    {new Date(request.moveInDate).toLocaleDateString()}
-                  </span>
-                </div>
-
-                {/* Message */}
-                <div>
-                  <p className="text-sm font-medium">Your Message</p>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {request.message || "No message provided."}
-                  </p>
-                </div>
-
-                {/* Payment Status */}
-                {request.status === "APPROVED" && request.payment && (
-                  <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2">
-                    <span className="text-sm text-muted-foreground">
-                      Payment
-                    </span>
-
-                    <span
-                      className={`text-sm font-semibold ${
-                        request.payment.status === "PAID"
-                          ? "text-green-600"
-                          : "text-yellow-600"
-                      }`}
+                  {/* Buttons */}
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Link
+                      href={`/properties/${request.property.id}`}
+                      className="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                     >
-                      {request.payment.status}
-                    </span>
+                      View Property
+                    </Link>
+
+                    {/* Cancel Pending Request */}
+                    {request.status === "PENDING" && (
+                      <Button
+                        variant="destructive"
+                        className="flex-1"
+                        disabled={cancellingId === request.id}
+                        onClick={() => handleCancel(request.id)}
+                      >
+                        {cancellingId === request.id
+                          ? "Cancelling..."
+                          : "Cancel Request"}
+                      </Button>
+                    )}
+
+                    {/* Pay Now */}
+                    {canPay && (
+                      <Button
+                        className="flex-1"
+                        disabled={payingId === request.id}
+                        onClick={() => handlePayment(request.id)}
+                      >
+                        {payingId === request.id ? "Processing..." : "Pay Now"}
+                      </Button>
+                    )}
+
+                    {/* Already Paid */}
+                    {isPaid && (
+                      <Button
+                        variant="outline"
+                        className="flex-1 border-green-300 text-green-700"
+                        disabled
+                      >
+                        Payment Completed
+                      </Button>
+                    )}
                   </div>
-                )}
-
-                {/* Buttons */}
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href={`/properties/${request.property.id}`}
-                    className="inline-flex h-9 flex-1 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-                  >
-                    View Property
-                  </Link>
-
-                  {/* Cancel Pending Request */}
-                  {request.status === "PENDING" && (
-                    <Button
-                      variant="destructive"
-                      className="flex-1"
-                      disabled={cancellingId === request.id}
-                      onClick={() => handleCancel(request.id)}
-                    >
-                      {cancellingId === request.id
-                        ? "Cancelling..."
-                        : "Cancel Request"}
-                    </Button>
-                  )}
-
-                  {/* Pay Now */}
-                  {canPay && (
-                    <Button
-                      className="flex-1"
-                      disabled={payingId === request.id}
-                      onClick={() => handlePayment(request.id)}
-                    >
-                      {payingId === request.id ? "Processing..." : "Pay Now"}
-                    </Button>
-                  )}
-
-                  {/* Already Paid */}
-                  {isPaid && (
-                    <Button
-                      variant="outline"
-                      className="flex-1 border-green-300 text-green-700"
-                      disabled
-                    >
-                      Payment Completed
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </main>
+  );
+}
+
+export default function RentalRequestsPage() {
+  return (
+    <RoleGuard
+      allowedRole="TENANT"
+      loadingText="Checking tenant access..."
+      accessMessage="Rental requests are available for tenants only."
+    >
+      <RentalRequestsContent />
+    </RoleGuard>
   );
 }

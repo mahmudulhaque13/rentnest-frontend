@@ -2,44 +2,33 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 import {
   getLandlordEarnings,
   type ILandlordEarnings,
 } from "@/services/payment";
 
-import { useAuth } from "@/components/providers/auth-provider";
+import { RoleGuard } from "@/components/shared/role-guard";
+import { Loading } from "@/components/shared/loading";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { Loading } from "@/components/shared/loading";
-
-export default function LandlordEarningsPage() {
-  const { user, loading: authLoading } = useAuth();
-
+function EarningsContent() {
   const [earnings, setEarnings] = useState<ILandlordEarnings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-
-    if (!user || user.role !== "LANDLORD") {
-      return;
-    }
+    let cancelled = false;
 
     const loadEarnings = async () => {
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
-        const message = "Please login again.";
-
-        setError(message);
-        setLoading(false);
-        toast.error(message);
+        if (!cancelled) {
+          setError("Please login again.");
+          setLoading(false);
+        }
 
         return;
       }
@@ -47,64 +36,33 @@ export default function LandlordEarningsPage() {
       try {
         const result = await getLandlordEarnings(accessToken);
 
-        setEarnings(result);
+        if (!cancelled) {
+          setEarnings(result);
+        }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to load earnings";
-
-        setError(message);
-        toast.error(message);
+        if (!cancelled) {
+          setError(
+            error instanceof Error ? error.message : "Failed to load earnings",
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     void loadEarnings();
-  }, [user, authLoading]);
 
-  if (authLoading || loading) {
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <Loading text="Loading earnings..." />
-      </main>
-    );
-  }
-
-  if (!user) {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-10 text-center">
-            <h1 className="text-xl font-semibold">Login required</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Please login to view your earnings.
-            </p>
-
-            <Link
-              href="/auth/login"
-              className="mt-5 inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Login
-            </Link>
-          </CardContent>
-        </Card>
-      </main>
-    );
-  }
-
-  if (user.role !== "LANDLORD") {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-10 text-center">
-            <h1 className="text-xl font-semibold">Landlord access only</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Earnings are available for landlords only.
-            </p>
-          </CardContent>
-        </Card>
       </main>
     );
   }
@@ -258,5 +216,17 @@ export default function LandlordEarningsPage() {
         </Card>
       )}
     </main>
+  );
+}
+
+export default function LandlordEarningsPage() {
+  return (
+    <RoleGuard
+      allowedRole="LANDLORD"
+      loadingText="Checking landlord access..."
+      accessMessage="Only landlords can view earnings."
+    >
+      <EarningsContent />
+    </RoleGuard>
   );
 }
