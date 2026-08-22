@@ -26,6 +26,7 @@ const statusStyles: Record<RentalRequestStatus, string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
   APPROVED: "bg-green-100 text-green-700",
   REJECTED: "bg-red-100 text-red-700",
+  ACTIVE: "bg-blue-100 text-blue-700",
 };
 
 function LandlordRentalRequestsContent() {
@@ -212,6 +213,13 @@ function LandlordRentalRequestsContent() {
           {requests.map((request) => {
             const isProcessing = actionId === request.id;
 
+            // Payment is completed
+            const isPaid = request.payment?.status === "PAID";
+
+            // If payment is completed, show ACTIVE
+            // even if the old rental request record is still APPROVED.
+            const displayStatus = isPaid ? "ACTIVE" : request.status;
+
             return (
               <Card key={request.id} className="overflow-hidden">
                 <div className="grid lg:grid-cols-[280px_1fr]">
@@ -245,12 +253,15 @@ function LandlordRentalRequestsContent() {
                           </p>
                         </div>
 
+                        {/* Status */}
                         <span
                           className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                            statusStyles[request.status]
+                            isPaid
+                              ? "bg-blue-100 text-blue-700"
+                              : statusStyles[request.status]
                           }`}
                         >
-                          {request.status}
+                          {displayStatus}
                         </span>
                       </div>
                     </CardHeader>
@@ -348,8 +359,8 @@ function LandlordRentalRequestsContent() {
                         </div>
                       )}
 
-                      {/* Approved Information */}
-                      {request.status === "APPROVED" && (
+                      {/* Approved but Payment Pending */}
+                      {request.status === "APPROVED" && !isPaid && (
                         <div className="rounded-md border border-green-200 bg-green-50 p-4">
                           <p className="text-sm font-medium text-green-700">
                             Request Approved
@@ -357,6 +368,20 @@ function LandlordRentalRequestsContent() {
 
                           <p className="mt-1 text-sm text-green-600">
                             The tenant can now proceed with payment.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Payment Completed */}
+                      {isPaid && (
+                        <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
+                          <p className="text-sm font-medium text-blue-700">
+                            Payment Completed
+                          </p>
+
+                          <p className="mt-1 text-sm text-blue-600">
+                            The tenant has completed the payment. This rental is
+                            now active.
                           </p>
                         </div>
                       )}

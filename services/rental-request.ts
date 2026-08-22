@@ -71,7 +71,7 @@ export const cancelRentalRequest = async (
 export const getLandlordRentalRequests = async (
   accessToken: string,
 ): Promise<IRentalRequest[]> => {
-  const response = await fetch(`${API_URL}/rental-requests/landlord-requests`, {
+  const response = await fetch(`${API_URL}/rental-requests/landlord`, {
     method: "GET",
     headers: {
       Authorization: accessToken,

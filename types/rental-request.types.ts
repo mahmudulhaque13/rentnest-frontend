@@ -1,32 +1,32 @@
-export type RentalRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type RentalRequestStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "ACTIVE";
+
+export type PaymentStatus = "PENDING" | "PAID" | "FAILED";
 
 export interface ICreateRentalRequest {
   propertyId: string;
   moveInDate: string;
-  message?: string;
+  message: string;
 }
 
 export interface IRentalRequestPayment {
   id: string;
   amount: number;
   transactionId: string;
-  paymentIntentId?: string | null;
+  paymentIntentId: string | null;
   provider: string;
-  status: "PENDING" | "PAID" | "FAILED";
-  paidAt?: string | null;
+  status: PaymentStatus;
+  paidAt: string | null;
   createdAt: string;
-}
-
-export interface IRentalRequestTenant {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
 }
 
 export interface IRentalRequestProperty {
   id: string;
   title: string;
+  slug: string;
   description: string;
   rent: number;
   bedrooms: number;
@@ -37,37 +37,49 @@ export interface IRentalRequestProperty {
   images: string[];
   amenities: string[];
   status: string;
+  landlordId: string;
+  categoryId: string;
+  createdAt: string;
+  updatedAt: string;
+  isDeleted: boolean;
   averageRating: number;
 
-  category: {
+  category?: {
     id: string;
     name: string;
+    slug: string;
+    createdAt: string;
+    updatedAt: string;
   };
 
-  landlord: {
+  landlord?: {
     id: string;
     name: string;
     email: string;
-    phone: string;
+    phone?: string;
   };
+}
+
+export interface IRentalRequestTenant {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
 }
 
 export interface IRentalRequest {
   id: string;
   moveInDate: string;
-  message: string | null;
+  message: string;
   status: RentalRequestStatus;
-
   tenantId: string;
-
-  tenant?: IRentalRequestTenant;
-
   propertyId: string;
+  createdAt: string;
+  updatedAt: string;
 
   property: IRentalRequestProperty;
 
-  payment?: IRentalRequestPayment | null;
+  tenant?: IRentalRequestTenant;
 
-  createdAt?: string;
-  updatedAt?: string;
+  payment?: IRentalRequestPayment | null;
 }
