@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { toast } from "sonner";
 
 import { loginUser } from "@/services/auth";
 import { Button } from "@/components/ui/button";
@@ -37,10 +38,15 @@ export default function LoginPage() {
 
       localStorage.setItem("accessToken", accessToken);
 
+      toast.success("Login successful!");
+
       router.push("/");
       router.refresh();
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Login failed");
+      const message = error instanceof Error ? error.message : "Login failed";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

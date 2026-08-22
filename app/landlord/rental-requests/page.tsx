@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import {
   approveRentalRequest,
@@ -36,7 +37,9 @@ export default function LandlordRentalRequestsPage() {
 
   useEffect(() => {
     const loadRequests = async () => {
-      if (authLoading) return;
+      if (authLoading) {
+        return;
+      }
 
       if (!user || user.role !== "LANDLORD") {
         setLoading(false);
@@ -46,7 +49,11 @@ export default function LandlordRentalRequestsPage() {
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
-        setError("Please login again.");
+        const message = "Please login again.";
+
+        setError(message);
+        toast.error(message);
+
         setLoading(false);
         return;
       }
@@ -56,24 +63,30 @@ export default function LandlordRentalRequestsPage() {
 
         setRequests(result);
       } catch (error) {
-        setError(
+        const message =
           error instanceof Error
             ? error.message
-            : "Failed to load rental requests",
-        );
+            : "Failed to load rental requests";
+
+        setError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
     };
 
-    loadRequests();
+    void loadRequests();
   }, [user, authLoading]);
 
   const handleApprove = async (requestId: string) => {
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
-      setError("Please login again.");
+      const message = "Please login again.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
@@ -97,12 +110,16 @@ export default function LandlordRentalRequestsPage() {
             : request,
         ),
       );
+
+      toast.success("Rental request approved successfully.");
     } catch (error) {
-      setError(
+      const message =
         error instanceof Error
           ? error.message
-          : "Failed to approve rental request",
-      );
+          : "Failed to approve rental request";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setActionId(null);
     }
@@ -112,7 +129,11 @@ export default function LandlordRentalRequestsPage() {
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
-      setError("Please login again.");
+      const message = "Please login again.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
@@ -132,12 +153,16 @@ export default function LandlordRentalRequestsPage() {
             : request,
         ),
       );
+
+      toast.success("Rental request rejected successfully.");
     } catch (error) {
-      setError(
+      const message =
         error instanceof Error
           ? error.message
-          : "Failed to reject rental request",
-      );
+          : "Failed to reject rental request";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setActionId(null);
     }
@@ -285,7 +310,7 @@ export default function LandlordRentalRequestsPage() {
                 <p className="text-sm font-medium">Tenant Message</p>
 
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {request.message}
+                  {request.message || "No message provided."}
                 </p>
               </div>
 

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { createProperty } from "@/services/property";
 import { getCategories } from "@/services/category";
@@ -41,9 +42,11 @@ export default function CreatePropertyPage() {
         const result = await getCategories();
         setCategories(result);
       } catch (error) {
-        setError(
-          error instanceof Error ? error.message : "Failed to load categories",
-        );
+        const message =
+          error instanceof Error ? error.message : "Failed to load categories";
+
+        setError(message);
+        toast.error(message);
       } finally {
         setCategoriesLoading(false);
       }
@@ -58,14 +61,22 @@ export default function CreatePropertyPage() {
     setError("");
 
     if (!user || user.role !== "LANDLORD") {
-      setError("Only landlords can create properties.");
+      const message = "Only landlords can create properties.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
-      setError("Please login again.");
+      const message = "Please login again.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
@@ -80,12 +91,20 @@ export default function CreatePropertyPage() {
       .filter(Boolean);
 
     if (images.length === 0) {
-      setError("At least one image URL is required.");
+      const message = "At least one image URL is required.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
     if (!categoryId) {
-      setError("Please select a category.");
+      const message = "Please select a category.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
@@ -109,12 +128,16 @@ export default function CreatePropertyPage() {
         accessToken,
       );
 
+      toast.success("Property created successfully.");
+
       router.push("/landlord/properties");
       router.refresh();
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to create property",
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to create property";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -157,6 +180,7 @@ export default function CreatePropertyPage() {
         className="space-y-6 rounded-xl border bg-card p-6 shadow-sm"
       >
         <div className="grid gap-6 md:grid-cols-2">
+          {/* Title */}
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="title">Title</Label>
 
@@ -170,6 +194,7 @@ export default function CreatePropertyPage() {
             />
           </div>
 
+          {/* Description */}
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="description">Description</Label>
 
@@ -185,6 +210,7 @@ export default function CreatePropertyPage() {
             />
           </div>
 
+          {/* Rent */}
           <div className="space-y-2">
             <Label htmlFor="rent">Monthly Rent</Label>
 
@@ -199,6 +225,7 @@ export default function CreatePropertyPage() {
             />
           </div>
 
+          {/* Category */}
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
 
@@ -224,6 +251,7 @@ export default function CreatePropertyPage() {
             </select>
           </div>
 
+          {/* Bedrooms */}
           <div className="space-y-2">
             <Label htmlFor="bedrooms">Bedrooms</Label>
 
@@ -237,6 +265,7 @@ export default function CreatePropertyPage() {
             />
           </div>
 
+          {/* Bathrooms */}
           <div className="space-y-2">
             <Label htmlFor="bathrooms">Bathrooms</Label>
 
@@ -250,6 +279,7 @@ export default function CreatePropertyPage() {
             />
           </div>
 
+          {/* Address */}
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="address">Address</Label>
 
@@ -263,6 +293,7 @@ export default function CreatePropertyPage() {
             />
           </div>
 
+          {/* City */}
           <div className="space-y-2">
             <Label htmlFor="city">City</Label>
 
@@ -276,6 +307,7 @@ export default function CreatePropertyPage() {
             />
           </div>
 
+          {/* District */}
           <div className="space-y-2">
             <Label htmlFor="district">District</Label>
 
@@ -289,6 +321,7 @@ export default function CreatePropertyPage() {
             />
           </div>
 
+          {/* Images */}
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="imageUrl">Image URLs</Label>
 
@@ -305,6 +338,7 @@ export default function CreatePropertyPage() {
             </p>
           </div>
 
+          {/* Amenities */}
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="amenities">Amenities</Label>
 
@@ -321,12 +355,14 @@ export default function CreatePropertyPage() {
           </div>
         </div>
 
+        {/* Error */}
         {error && (
           <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
           </div>
         )}
 
+        {/* Submit */}
         <Button
           type="submit"
           disabled={loading || categoriesLoading}

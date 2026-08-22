@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import {
   cancelRentalRequest,
@@ -36,7 +37,6 @@ export default function RentalRequestsPage() {
   const [error, setError] = useState("");
 
   const [cancellingId, setCancellingId] = useState<string | null>(null);
-
   const [payingId, setPayingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,7 +53,11 @@ export default function RentalRequestsPage() {
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
-        setError("Please login again.");
+        const message = "Please login again.";
+
+        setError(message);
+        toast.error(message);
+
         setLoading(false);
         return;
       }
@@ -63,11 +67,13 @@ export default function RentalRequestsPage() {
 
         setRequests(result);
       } catch (error) {
-        setError(
+        const message =
           error instanceof Error
             ? error.message
-            : "Failed to load rental requests",
-        );
+            : "Failed to load rental requests";
+
+        setError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -80,7 +86,11 @@ export default function RentalRequestsPage() {
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
-      setError("Please login again.");
+      const message = "Please login again.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
@@ -93,12 +103,16 @@ export default function RentalRequestsPage() {
       setRequests((currentRequests) =>
         currentRequests.filter((request) => request.id !== requestId),
       );
+
+      toast.success("Rental request cancelled successfully.");
     } catch (error) {
-      setError(
+      const message =
         error instanceof Error
           ? error.message
-          : "Failed to cancel rental request",
-      );
+          : "Failed to cancel rental request";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setCancellingId(null);
     }
@@ -108,7 +122,11 @@ export default function RentalRequestsPage() {
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
-      setError("Please login again.");
+      const message = "Please login again.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
@@ -122,11 +140,15 @@ export default function RentalRequestsPage() {
         throw new Error("Checkout URL was not returned");
       }
 
+      toast.success("Redirecting to secure payment...");
+
       window.location.href = result.checkoutUrl;
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to start payment",
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to start payment";
+
+      setError(message);
+      toast.error(message);
 
       setPayingId(null);
     }

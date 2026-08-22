@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/shared/navbar";
 import { Footer } from "@/components/shared/footer";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "RentNest",
@@ -20,8 +21,12 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <Navbar />
+
           {children}
+
           <Footer />
+
+          <Toaster position="top-right" richColors closeButton />
         </AuthProvider>
       </body>
     </html>

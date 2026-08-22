@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { toast } from "sonner";
 
 import { registerUser } from "@/services/auth";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,11 @@ export default function RegisterPage() {
     setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      const message = "Passwords do not match.";
+
+      setError(message);
+      toast.error(message);
+
       return;
     }
 
@@ -50,9 +55,15 @@ export default function RegisterPage() {
         role,
       });
 
+      toast.success("Account created successfully!");
+
       router.push("/auth/login");
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Registration failed");
+      const message =
+        error instanceof Error ? error.message : "Registration failed";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -126,7 +137,6 @@ export default function RegisterPage() {
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
                 <option value="TENANT">Tenant</option>
-
                 <option value="LANDLORD">Landlord</option>
               </select>
             </div>

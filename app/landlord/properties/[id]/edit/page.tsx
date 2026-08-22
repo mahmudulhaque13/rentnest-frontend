@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { getPropertyById, updateProperty } from "@/services/property";
+
 import { getCategories } from "@/services/category";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ICategory {
@@ -59,9 +62,11 @@ export default function EditPropertyPage() {
         setAmenities(property.amenities?.join(", ") || "");
         setCategoryId(property.category.id);
       } catch (error) {
-        setError(
-          error instanceof Error ? error.message : "Failed to load property",
-        );
+        const message =
+          error instanceof Error ? error.message : "Failed to load property";
+
+        setError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -106,14 +111,16 @@ export default function EditPropertyPage() {
         accessToken,
       );
 
-      alert("Property updated successfully.");
+      toast.success("Property updated successfully.");
 
       router.push("/landlord/properties");
       router.refresh();
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to update property",
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to update property";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -140,7 +147,7 @@ export default function EditPropertyPage() {
 
         <CardContent>
           {error && (
-            <div className="mb-6 rounded-md bg-red-50 p-4 text-sm text-red-700">
+            <div className="mb-6 rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
               {error}
             </div>
           )}

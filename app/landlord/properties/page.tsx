@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { deleteProperty, getMyProperties } from "@/services/property";
 
@@ -33,7 +34,6 @@ function PropertiesContent() {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -43,7 +43,10 @@ function PropertiesContent() {
 
       if (!accessToken) {
         if (!cancelled) {
-          setError("Please login again.");
+          const message = "Please login again.";
+
+          setError(message);
+          toast.error(message);
           setLoading(false);
         }
 
@@ -58,11 +61,13 @@ function PropertiesContent() {
         }
       } catch (error) {
         if (!cancelled) {
-          setError(
+          const message =
             error instanceof Error
               ? error.message
-              : "Failed to load properties",
-          );
+              : "Failed to load properties";
+
+          setError(message);
+          toast.error(message);
         }
       } finally {
         if (!cancelled) {
@@ -86,7 +91,6 @@ function PropertiesContent() {
     if (!confirmed) return;
 
     setError("");
-    setSuccess("");
     setDeletingId(id);
 
     try {
@@ -102,11 +106,13 @@ function PropertiesContent() {
         currentProperties.filter((property) => property.id !== id),
       );
 
-      setSuccess("Property deleted successfully.");
+      toast.success("Property deleted successfully.");
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to delete property",
-      );
+      const message =
+        error instanceof Error ? error.message : "Failed to delete property";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setDeletingId(null);
     }
@@ -140,16 +146,9 @@ function PropertiesContent() {
         </Link>
       </div>
 
-      {/* Success */}
-      {success && (
-        <div className="mb-6 rounded-md bg-green-50 p-4 text-sm text-green-700">
-          {success}
-        </div>
-      )}
-
       {/* Error */}
       {error && (
-        <div className="mb-6 rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="mb-6 rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
           {error}
         </div>
       )}
