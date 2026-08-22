@@ -13,6 +13,8 @@ import {
 
 import { useAuth } from "@/components/providers/auth-provider";
 
+import { Loading } from "@/components/shared/loading";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,26 +59,44 @@ export function PropertyReviews({
 
   const [reviewToDelete, setReviewToDelete] = useState<IReview | null>(null);
 
+  /*
+   * Load property reviews.
+   */
   useEffect(() => {
+    let cancelled = false;
+
     const loadReviews = async () => {
       try {
         const result = await getPropertyReviews(propertyId);
 
-        setReviews(result);
+        if (!cancelled) {
+          setReviews(result);
+        }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to load reviews";
+        if (!cancelled) {
+          const message =
+            error instanceof Error ? error.message : "Failed to load reviews";
 
-        setError(message);
-        toast.error(message);
+          setError(message);
+          toast.error(message);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
-    loadReviews();
+    void loadReviews();
+
+    return () => {
+      cancelled = true;
+    };
   }, [propertyId]);
 
+  /*
+   * Create review.
+   */
   const handleCreateReview = async () => {
     if (!user || user.role !== "TENANT") {
       const message = "Only tenants can submit reviews.";
@@ -137,11 +157,15 @@ export function PropertyReviews({
     }
   };
 
+  /*
+   * Delete review.
+   */
   const handleDeleteReview = async () => {
-    if (!reviewToDelete) return;
+    if (!reviewToDelete) {
+      return;
+    }
 
     const reviewId = reviewToDelete.id;
-
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
@@ -149,7 +173,6 @@ export function PropertyReviews({
 
       setError(message);
       toast.error(message);
-
       setReviewToDelete(null);
 
       return;
@@ -178,6 +201,9 @@ export function PropertyReviews({
     }
   };
 
+  /*
+   * Start editing a review.
+   */
   const startEditing = (review: IReview) => {
     setEditingId(review.id);
     setEditRating(review.rating);
@@ -185,12 +211,18 @@ export function PropertyReviews({
     setError("");
   };
 
+  /*
+   * Cancel review editing.
+   */
   const cancelEditing = () => {
     setEditingId(null);
     setEditRating(5);
     setEditComment("");
   };
 
+  /*
+   * Update review.
+   */
   const handleUpdateReview = async (reviewId: string) => {
     const accessToken = localStorage.getItem("accessToken");
 
@@ -247,6 +279,9 @@ export function PropertyReviews({
     }
   };
 
+  /*
+   * Render rating stars.
+   */
   const renderStars = (
     currentRating: number,
     clickable = false,
@@ -379,9 +414,7 @@ export function PropertyReviews({
 
           <CardContent>
             {loading ? (
-              <p className="text-sm text-muted-foreground">
-                Loading reviews...
-              </p>
+              <Loading text="Loading reviews..." />
             ) : reviews.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No reviews yet. Be the first to review this property.
@@ -486,7 +519,7 @@ export function PropertyReviews({
         </Card>
       </section>
 
-      {/* Delete Review Confirmation Dialog */}
+      {/* Delete Confirmation */}
       <AlertDialog
         open={reviewToDelete !== null}
         onOpenChange={(open) => {
