@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import {
   getLandlordEarnings,
@@ -12,30 +13,34 @@ import { useAuth } from "@/components/providers/auth-provider";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { Loading } from "@/components/shared/loading";
+
 export default function LandlordEarningsPage() {
   const { user, loading: authLoading } = useAuth();
 
   const [earnings, setEarnings] = useState<ILandlordEarnings | null>(null);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
+    if (!user || user.role !== "LANDLORD") {
+      return;
+    }
+
     const loadEarnings = async () => {
-      if (authLoading) {
-        return;
-      }
-
-      if (!user || user.role !== "LANDLORD") {
-        setLoading(false);
-        return;
-      }
-
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
-        setError("Please login again.");
+        const message = "Please login again.";
+
+        setError(message);
         setLoading(false);
+        toast.error(message);
+
         return;
       }
 
@@ -44,21 +49,23 @@ export default function LandlordEarningsPage() {
 
         setEarnings(result);
       } catch (error) {
-        setError(
-          error instanceof Error ? error.message : "Failed to load earnings",
-        );
+        const message =
+          error instanceof Error ? error.message : "Failed to load earnings";
+
+        setError(message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
     };
 
-    loadEarnings();
+    void loadEarnings();
   }, [user, authLoading]);
 
   if (authLoading || loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <p className="text-sm text-muted-foreground">Loading earnings...</p>
+        <Loading text="Loading earnings..." />
       </main>
     );
   }

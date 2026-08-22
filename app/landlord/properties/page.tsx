@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { deleteProperty, getMyProperties } from "@/services/property";
 import { useAuth } from "@/components/providers/auth-provider";
 
+import { Loading } from "@/components/shared/loading";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -90,7 +92,7 @@ function PropertiesContent() {
       }
     };
 
-    loadProperties();
+    void loadProperties();
 
     return () => {
       cancelled = true;
@@ -134,7 +136,7 @@ function PropertiesContent() {
   if (loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <p className="text-sm text-muted-foreground">Loading properties...</p>
+        <Loading text="Loading properties..." />
       </main>
     );
   }
@@ -339,7 +341,7 @@ export default function MyPropertiesPage() {
   if (authLoading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <Loading text="Loading authentication..." />
       </main>
     );
   }

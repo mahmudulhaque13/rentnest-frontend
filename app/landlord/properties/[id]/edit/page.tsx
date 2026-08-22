@@ -5,8 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { getPropertyById, updateProperty } from "@/services/property";
-
 import { getCategories } from "@/services/category";
+
+import { Loading } from "@/components/shared/loading";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,7 +74,7 @@ export default function EditPropertyPage() {
     };
 
     if (id) {
-      loadData();
+      void loadData();
     }
   }, [id]);
 
@@ -129,7 +130,7 @@ export default function EditPropertyPage() {
   if (loading) {
     return (
       <main className="mx-auto w-full max-w-3xl px-4 py-10">
-        <p className="text-sm text-muted-foreground">Loading property...</p>
+        <Loading text="Loading property..." />
       </main>
     );
   }

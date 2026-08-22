@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { Loading } from "@/components/shared/loading";
+
 import type { ICategory } from "@/types/category.types";
 
 export default function CreatePropertyPage() {
@@ -40,6 +42,7 @@ export default function CreatePropertyPage() {
     const loadCategories = async () => {
       try {
         const result = await getCategories();
+
         setCategories(result);
       } catch (error) {
         const message =
@@ -52,7 +55,7 @@ export default function CreatePropertyPage() {
       }
     };
 
-    loadCategories();
+    void loadCategories();
   }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -145,15 +148,15 @@ export default function CreatePropertyPage() {
 
   if (authLoading) {
     return (
-      <main className="mx-auto w-full max-w-4xl px-4 py-10">
-        <p className="text-sm text-muted-foreground">Loading...</p>
+      <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
+        <Loading text="Loading authentication..." />
       </main>
     );
   }
 
   if (!user || user.role !== "LANDLORD") {
     return (
-      <main className="mx-auto w-full max-w-4xl px-4 py-10">
+      <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="rounded-xl border p-6 text-center">
           <h1 className="text-xl font-semibold">Landlord access only</h1>
 
