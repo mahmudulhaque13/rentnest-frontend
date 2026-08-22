@@ -175,7 +175,7 @@ function AdminUsersContent() {
 
                 <tbody>
                   {users.map((item) => {
-                    const isAdmin = item.role === "ADMIN";
+                    const isProtectedUser = item.role === "ADMIN";
                     const isUpdating = updatingId === item.id;
 
                     return (
@@ -215,7 +215,7 @@ function AdminUsersContent() {
 
                         {/* Action */}
                         <td className="px-4 py-4 text-right">
-                          {isAdmin ? (
+                          {isProtectedUser ? (
                             <span className="text-xs text-muted-foreground">
                               Protected
                             </span>
