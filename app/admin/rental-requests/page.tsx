@@ -8,11 +8,10 @@ import {
   type IAdminRentalRequest,
 } from "@/services/admin";
 
-import { useAuth } from "@/components/providers/auth-provider";
+import { RoleGuard } from "@/components/shared/role-guard";
+import { Loading } from "@/components/shared/loading";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-import { Loading } from "@/components/shared/loading";
 
 const statusStyles: Record<IAdminRentalRequest["status"], string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
@@ -21,27 +20,25 @@ const statusStyles: Record<IAdminRentalRequest["status"], string> = {
   CANCELLED: "bg-gray-100 text-gray-700",
 };
 
-export default function AdminRentalRequestsPage() {
-  const { user, loading: authLoading } = useAuth();
-
+function AdminRentalRequestsContent() {
   const [requests, setRequests] = useState<IAdminRentalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (authLoading || !user || user.role !== "ADMIN") {
-      return;
-    }
+    let cancelled = false;
 
     const loadRentalRequests = async () => {
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
-        const message = "Please login again.";
+        if (!cancelled) {
+          const message = "Please login again.";
 
-        setError(message);
-        toast.error(message);
-        setLoading(false);
+          setError(message);
+          setLoading(false);
+          toast.error(message);
+        }
 
         return;
       }
@@ -49,59 +46,37 @@ export default function AdminRentalRequestsPage() {
       try {
         const result = await getAllAdminRentalRequests(accessToken);
 
-        setRequests(result);
+        if (!cancelled) {
+          setRequests(result);
+        }
       } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to load rental requests";
+        if (!cancelled) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Failed to load rental requests";
 
-        setError(message);
-        toast.error(message);
+          setError(message);
+          toast.error(message);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     void loadRentalRequests();
-  }, [user, authLoading]);
 
-  if (authLoading || loading) {
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <Loading text="Loading rental requests..." />
-      </main>
-    );
-  }
-
-  if (!user) {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <h1 className="text-xl font-semibold">Login required</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Please login as an admin.
-            </p>
-          </CardContent>
-        </Card>
-      </main>
-    );
-  }
-
-  if (user.role !== "ADMIN") {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <h1 className="text-xl font-semibold">Admin access only</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              You are not authorized to access this page.
-            </p>
-          </CardContent>
-        </Card>
       </main>
     );
   }
@@ -210,6 +185,7 @@ export default function AdminRentalRequestsPage() {
             <div className="space-y-4">
               {requests.map((request) => (
                 <div key={request.id} className="rounded-lg border p-5">
+                  {/* Top Section */}
                   <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
                     {/* Property */}
                     <div className="min-w-0">
@@ -231,7 +207,9 @@ export default function AdminRentalRequestsPage() {
 
                     {/* Status */}
                     <span
-                      className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusStyles[request.status]}`}
+                      className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                        statusStyles[request.status]
+                      }`}
                     >
                       {request.status}
                     </span>
@@ -303,5 +281,17 @@ export default function AdminRentalRequestsPage() {
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+export default function AdminRentalRequestsPage() {
+  return (
+    <RoleGuard
+      allowedRole="ADMIN"
+      loadingText="Checking admin access..."
+      accessMessage="You are not authorized to access this page."
+    >
+      <AdminRentalRequestsContent />
+    </RoleGuard>
   );
 }

@@ -11,15 +11,14 @@ import {
   type IAdminUser,
 } from "@/services/admin";
 
-import { useAuth } from "@/components/providers/auth-provider";
+import { toast } from "sonner";
+
+import { RoleGuard } from "@/components/shared/role-guard";
+import { Loading } from "@/components/shared/loading";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { Loading } from "@/components/shared/loading";
-
-export default function AdminDashboardPage() {
-  const { user, loading: authLoading } = useAuth();
-
+function AdminDashboardContent() {
   const [users, setUsers] = useState<IAdminUser[]>([]);
   const [properties, setProperties] = useState<IAdminProperty[]>([]);
   const [rentalRequests, setRentalRequests] = useState<IAdminRentalRequest[]>(
@@ -30,16 +29,19 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (authLoading || !user || user.role !== "ADMIN") {
-      return;
-    }
+    let cancelled = false;
 
     const loadAdminData = async () => {
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
-        setError("Please login again.");
-        setLoading(false);
+        if (!cancelled) {
+          const message = "Please login again.";
+
+          setError(message);
+          setLoading(false);
+          toast.error(message);
+        }
 
         return;
       }
@@ -52,59 +54,39 @@ export default function AdminDashboardPage() {
             getAllAdminRentalRequests(accessToken),
           ]);
 
+        if (cancelled) return;
+
         setUsers(usersResult);
         setProperties(propertiesResult);
         setRentalRequests(rentalRequestsResult);
       } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Failed to load admin dashboard",
-        );
+        if (!cancelled) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Failed to load admin dashboard";
+
+          setError(message);
+          toast.error(message);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     void loadAdminData();
-  }, [user, authLoading]);
 
-  if (authLoading || loading) {
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <Loading text="Loading admin dashboard..." />
-      </main>
-    );
-  }
-
-  if (!user) {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <h1 className="text-xl font-semibold">Login required</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Please login as an admin.
-            </p>
-          </CardContent>
-        </Card>
-      </main>
-    );
-  }
-
-  if (user.role !== "ADMIN") {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <h1 className="text-xl font-semibold">Admin access only</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              You are not authorized to access this page.
-            </p>
-          </CardContent>
-        </Card>
       </main>
     );
   }
@@ -345,5 +327,17 @@ export default function AdminDashboardPage() {
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+export default function AdminDashboardPage() {
+  return (
+    <RoleGuard
+      allowedRole="ADMIN"
+      loadingText="Checking admin access..."
+      accessMessage="You are not authorized to access this page."
+    >
+      <AdminDashboardContent />
+    </RoleGuard>
   );
 }

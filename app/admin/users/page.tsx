@@ -9,36 +9,33 @@ import {
   type IAdminUser,
 } from "@/services/admin";
 
-import { useAuth } from "@/components/providers/auth-provider";
+import { RoleGuard } from "@/components/shared/role-guard";
+import { Loading } from "@/components/shared/loading";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 
-import { Loading } from "@/components/shared/loading";
-
-export default function AdminUsersPage() {
-  const { user, loading: authLoading } = useAuth();
-
+function AdminUsersContent() {
   const [users, setUsers] = useState<IAdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (authLoading || !user || user.role !== "ADMIN") {
-      return;
-    }
+    let cancelled = false;
 
     const loadUsers = async () => {
       const accessToken = localStorage.getItem("accessToken");
 
       if (!accessToken) {
-        const message = "Please login again.";
+        if (!cancelled) {
+          const message = "Please login again.";
 
-        setError(message);
-        toast.error(message);
-        setLoading(false);
+          setError(message);
+          setLoading(false);
+          toast.error(message);
+        }
 
         return;
       }
@@ -46,20 +43,30 @@ export default function AdminUsersPage() {
       try {
         const result = await getAllAdminUsers(accessToken);
 
-        setUsers(result);
+        if (!cancelled) {
+          setUsers(result);
+        }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Failed to load users";
+        if (!cancelled) {
+          const message =
+            error instanceof Error ? error.message : "Failed to load users";
 
-        setError(message);
-        toast.error(message);
+          setError(message);
+          toast.error(message);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
     void loadUsers();
-  }, [user, authLoading]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleStatusChange = async (
     userId: string,
@@ -108,42 +115,10 @@ export default function AdminUsersPage() {
     }
   };
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <Loading text="Loading users..." />
-      </main>
-    );
-  }
-
-  if (!user) {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <h1 className="text-xl font-semibold">Login required</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              Please login as an admin.
-            </p>
-          </CardContent>
-        </Card>
-      </main>
-    );
-  }
-
-  if (user.role !== "ADMIN") {
-    return (
-      <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <h1 className="text-xl font-semibold">Admin access only</h1>
-
-            <p className="mt-2 text-sm text-muted-foreground">
-              You are not authorized to access this page.
-            </p>
-          </CardContent>
-        </Card>
       </main>
     );
   }
@@ -275,5 +250,17 @@ export default function AdminUsersPage() {
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+export default function AdminUsersPage() {
+  return (
+    <RoleGuard
+      allowedRole="ADMIN"
+      loadingText="Checking admin access..."
+      accessMessage="You are not authorized to access this page."
+    >
+      <AdminUsersContent />
+    </RoleGuard>
   );
 }
