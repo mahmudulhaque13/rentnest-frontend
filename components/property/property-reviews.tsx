@@ -13,6 +13,17 @@ import {
 
 import { useAuth } from "@/components/providers/auth-provider";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
@@ -43,6 +54,8 @@ export function PropertyReviews({
   const [editComment, setEditComment] = useState("");
 
   const [error, setError] = useState("");
+
+  const [reviewToDelete, setReviewToDelete] = useState<IReview | null>(null);
 
   useEffect(() => {
     const loadReviews = async () => {
@@ -124,7 +137,11 @@ export function PropertyReviews({
     }
   };
 
-  const handleDeleteReview = async (reviewId: string) => {
+  const handleDeleteReview = async () => {
+    if (!reviewToDelete) return;
+
+    const reviewId = reviewToDelete.id;
+
     const accessToken = localStorage.getItem("accessToken");
 
     if (!accessToken) {
@@ -133,14 +150,8 @@ export function PropertyReviews({
       setError(message);
       toast.error(message);
 
-      return;
-    }
+      setReviewToDelete(null);
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this review?",
-    );
-
-    if (!confirmed) {
       return;
     }
 
@@ -163,6 +174,7 @@ export function PropertyReviews({
       toast.error(message);
     } finally {
       setDeletingId(null);
+      setReviewToDelete(null);
     }
   };
 
@@ -268,203 +280,246 @@ export function PropertyReviews({
     : false;
 
   return (
-    <section className="mt-10 space-y-6">
-      {/* Reviews Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <span>Reviews & Ratings</span>
-
-            <span className="text-lg font-normal">
-              ⭐ {averageRating.toFixed(1)} / 5
-            </span>
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Error */}
-      {error && (
-        <Card>
-          <CardContent className="py-4 text-sm text-destructive">
-            {error}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Add Review */}
-      {!authLoading && user?.role === "TENANT" && !hasReviewed && (
+    <>
+      <section className="mt-10 space-y-6">
+        {/* Reviews Header */}
         <Card>
           <CardHeader>
-            <CardTitle>Write a Review</CardTitle>
+            <CardTitle className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span>Reviews & Ratings</span>
+
+              <span className="text-lg font-normal">
+                ⭐ {averageRating.toFixed(1)} / 5
+              </span>
+            </CardTitle>
           </CardHeader>
 
-          <CardContent className="space-y-4">
-            <div>
-              <p className="mb-2 text-sm font-medium">Rating</p>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+            </p>
+          </CardContent>
+        </Card>
 
-              {renderStars(rating, true, setRating)}
-            </div>
+        {/* Error */}
+        {error && (
+          <Card>
+            <CardContent className="py-4 text-sm text-destructive">
+              {error}
+            </CardContent>
+          </Card>
+        )}
 
-            <div>
-              <label htmlFor="review-comment" className="text-sm font-medium">
-                Comment
-              </label>
+        {/* Add Review */}
+        {!authLoading && user?.role === "TENANT" && !hasReviewed && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Write a Review</CardTitle>
+            </CardHeader>
 
-              <textarea
-                id="review-comment"
-                value={comment}
-                onChange={(event) => setComment(event.target.value)}
-                placeholder="Write your experience about this property..."
-                rows={4}
-                maxLength={500}
-                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              />
+            <CardContent className="space-y-4">
+              <div>
+                <p className="mb-2 text-sm font-medium">Rating</p>
 
-              <p className="mt-1 text-xs text-muted-foreground">
-                {comment.length}/500
+                {renderStars(rating, true, setRating)}
+              </div>
+
+              <div>
+                <label htmlFor="review-comment" className="text-sm font-medium">
+                  Comment
+                </label>
+
+                <textarea
+                  id="review-comment"
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                  placeholder="Write your experience about this property..."
+                  rows={4}
+                  maxLength={500}
+                  className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {comment.length}/500
+                </p>
+              </div>
+
+              <Button onClick={handleCreateReview} disabled={submitting}>
+                {submitting ? "Submitting..." : "Submit Review"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Login Message */}
+        {!authLoading && !user && (
+          <Card>
+            <CardContent className="py-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Please login as a tenant to submit a review.
               </p>
-            </div>
+            </CardContent>
+          </Card>
+        )}
 
-            <Button onClick={handleCreateReview} disabled={submitting}>
-              {submitting ? "Submitting..." : "Submit Review"}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+        {/* Already Reviewed */}
+        {!authLoading && user?.role === "TENANT" && hasReviewed && (
+          <Card>
+            <CardContent className="py-4 text-sm text-muted-foreground">
+              You have already reviewed this property.
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Login Message */}
-      {!authLoading && !user && (
+        {/* Reviews List */}
         <Card>
-          <CardContent className="py-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Please login as a tenant to submit a review.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+          <CardHeader>
+            <CardTitle>Customer Reviews</CardTitle>
+          </CardHeader>
 
-      {/* Already Reviewed */}
-      {!authLoading && user?.role === "TENANT" && hasReviewed && (
-        <Card>
-          <CardContent className="py-4 text-sm text-muted-foreground">
-            You have already reviewed this property.
-          </CardContent>
-        </Card>
-      )}
+          <CardContent>
+            {loading ? (
+              <p className="text-sm text-muted-foreground">
+                Loading reviews...
+              </p>
+            ) : reviews.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No reviews yet. Be the first to review this property.
+              </p>
+            ) : (
+              <div className="space-y-6">
+                {reviews.map((review) => {
+                  const isOwner = user?.id === review.tenantId;
 
-      {/* Reviews List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Customer Reviews</CardTitle>
-        </CardHeader>
+                  if (editingId === review.id) {
+                    return (
+                      <div key={review.id} className="rounded-lg border p-4">
+                        <p className="mb-2 text-sm font-medium">Edit Rating</p>
 
-        <CardContent>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Loading reviews...</p>
-          ) : reviews.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No reviews yet. Be the first to review this property.
-            </p>
-          ) : (
-            <div className="space-y-6">
-              {reviews.map((review) => {
-                const isOwner = user?.id === review.tenantId;
+                        {renderStars(editRating, true, setEditRating)}
 
-                if (editingId === review.id) {
+                        <textarea
+                          value={editComment}
+                          onChange={(event) =>
+                            setEditComment(event.target.value)
+                          }
+                          rows={4}
+                          maxLength={500}
+                          className="mt-4 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                        />
+
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {editComment.length}/500
+                        </p>
+
+                        <div className="mt-3 flex gap-2">
+                          <Button
+                            disabled={submitting}
+                            onClick={() => handleUpdateReview(review.id)}
+                          >
+                            {submitting ? "Updating..." : "Update"}
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            onClick={cancelEditing}
+                            disabled={submitting}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
-                    <div key={review.id} className="rounded-lg border p-4">
-                      <p className="mb-2 text-sm font-medium">Edit Rating</p>
+                    <div
+                      key={review.id}
+                      className="border-b pb-6 last:border-b-0 last:pb-0"
+                    >
+                      <div className="flex flex-col justify-between gap-3 sm:flex-row">
+                        <div>
+                          <p className="font-semibold">
+                            {review.tenant?.name ?? "Tenant"}
+                          </p>
 
-                      {renderStars(editRating, true, setEditRating)}
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(review.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
 
-                      <textarea
-                        value={editComment}
-                        onChange={(event) => setEditComment(event.target.value)}
-                        rows={4}
-                        maxLength={500}
-                        className="mt-4 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                      />
+                        {renderStars(review.rating)}
+                      </div>
 
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {editComment.length}/500
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        {review.comment}
                       </p>
 
-                      <div className="mt-3 flex gap-2">
-                        <Button
-                          disabled={submitting}
-                          onClick={() => handleUpdateReview(review.id)}
-                        >
-                          {submitting ? "Updating..." : "Update"}
-                        </Button>
+                      {isOwner && (
+                        <div className="mt-4 flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => startEditing(review)}
+                          >
+                            Edit
+                          </Button>
 
-                        <Button
-                          variant="outline"
-                          onClick={cancelEditing}
-                          disabled={submitting}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={deletingId === review.id}
+                            onClick={() => setReviewToDelete(review)}
+                          >
+                            {deletingId === review.id
+                              ? "Deleting..."
+                              : "Delete"}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   );
-                }
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
-                return (
-                  <div
-                    key={review.id}
-                    className="border-b pb-6 last:border-b-0 last:pb-0"
-                  >
-                    <div className="flex flex-col justify-between gap-3 sm:flex-row">
-                      <div>
-                        <p className="font-semibold">
-                          {review.tenant?.name ?? "Tenant"}
-                        </p>
+      {/* Delete Review Confirmation Dialog */}
+      <AlertDialog
+        open={reviewToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deletingId) {
+            setReviewToDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete review?</AlertDialogTitle>
 
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
+            <AlertDialogDescription>
+              Are you sure you want to delete your review? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
 
-                      {renderStars(review.rating)}
-                    </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingId !== null}>
+              Cancel
+            </AlertDialogCancel>
 
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      {review.comment}
-                    </p>
-
-                    {isOwner && (
-                      <div className="mt-4 flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => startEditing(review)}
-                        >
-                          Edit
-                        </Button>
-
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          disabled={deletingId === review.id}
-                          onClick={() => handleDeleteReview(review.id)}
-                        >
-                          {deletingId === review.id ? "Deleting..." : "Delete"}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </section>
+            <AlertDialogAction
+              onClick={handleDeleteReview}
+              disabled={deletingId !== null}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingId !== null ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

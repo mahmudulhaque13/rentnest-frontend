@@ -20,11 +20,13 @@ export const getProperties = async (): Promise<IPropertyResponse> => {
     cache: "no-store",
   });
 
+  const result = await response.json();
+
   if (!response.ok) {
-    throw new Error("Failed to fetch properties");
+    throw new Error(result.message || "Failed to fetch properties");
   }
 
-  return response.json();
+  return result;
 };
 
 export const getPropertyById = async (id: string): Promise<IProperty> => {
@@ -32,11 +34,11 @@ export const getPropertyById = async (id: string): Promise<IProperty> => {
     cache: "no-store",
   });
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch property");
-  }
-
   const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to fetch property");
+  }
 
   return result.data;
 };

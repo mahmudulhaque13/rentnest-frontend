@@ -95,9 +95,17 @@ export const deleteReview = async (
     },
   });
 
-  const result = await response.json();
-
   if (!response.ok) {
-    throw new Error(result.message || "Failed to delete review");
+    let message = "Failed to delete review";
+
+    try {
+      const result = await response.json();
+
+      message = result.message || message;
+    } catch {
+      // Ignore empty/non-JSON error responses.
+    }
+
+    throw new Error(message);
   }
 };
