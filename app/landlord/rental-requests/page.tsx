@@ -106,10 +106,6 @@ function LandlordRentalRequestsContent() {
             ? {
                 ...request,
                 status: "APPROVED",
-                property: {
-                  ...request.property,
-                  status: "RENTED",
-                },
               }
             : request,
         ),
@@ -201,130 +197,190 @@ function LandlordRentalRequestsContent() {
       )}
 
       {/* Empty State */}
-      {requests.length === 0 && !error && (
+      {requests.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <h2 className="text-xl font-semibold">No rental requests yet</h2>
+            <h2 className="text-xl font-semibold">No rental requests found</h2>
 
             <p className="mt-2 text-sm text-muted-foreground">
-              Tenant rental requests will appear here.
+              There are currently no rental requests for your properties.
             </p>
           </CardContent>
         </Card>
+      ) : (
+        <div className="space-y-6">
+          {requests.map((request) => {
+            const isProcessing = actionId === request.id;
+
+            return (
+              <Card key={request.id} className="overflow-hidden">
+                <div className="grid lg:grid-cols-[280px_1fr]">
+                  {/* Property Image */}
+                  <div className="relative h-56 w-full bg-muted lg:h-full lg:min-h-[280px]">
+                    {request.property.images?.[0] ? (
+                      <Image
+                        src={request.property.images[0]}
+                        alt={request.property.title}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                        No image
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div>
+                    <CardHeader>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <CardTitle className="text-xl">
+                            {request.property.title}
+                          </CardTitle>
+
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {request.property.city}, {request.property.district}
+                          </p>
+                        </div>
+
+                        <span
+                          className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                            statusStyles[request.status]
+                          }`}
+                        >
+                          {request.status}
+                        </span>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="space-y-5">
+                      {/* Property Information */}
+                      <div className="grid gap-4 border-b pb-5 sm:grid-cols-2 lg:grid-cols-3">
+                        {/* Monthly Rent */}
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Monthly Rent
+                          </p>
+
+                          <p className="mt-1 text-lg font-semibold">
+                            ৳{request.property.rent.toLocaleString()}
+                          </p>
+                        </div>
+
+                        {/* Move-in Date */}
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Move-in Date
+                          </p>
+
+                          <p className="mt-1 font-medium">
+                            {request.moveInDate
+                              ? new Date(
+                                  request.moveInDate,
+                                ).toLocaleDateString()
+                              : "Not specified"}
+                          </p>
+                        </div>
+
+                        {/* Requested On */}
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Requested On
+                          </p>
+
+                          <p className="mt-1 font-medium">
+                            {request.createdAt
+                              ? new Date(request.createdAt).toLocaleDateString()
+                              : "Not available"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Tenant Information */}
+                      <div>
+                        <p className="text-sm font-medium">Tenant</p>
+
+                        <p className="mt-1 font-medium">
+                          {request.tenant?.name || "Unknown tenant"}
+                        </p>
+
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {request.tenant?.email || "No email available"}
+                        </p>
+
+                        {request.tenant?.phone && (
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {request.tenant.phone}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Tenant Message */}
+                      <div className="rounded-md bg-muted/50 p-4">
+                        <p className="text-sm font-medium">Tenant Message</p>
+
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {request.message || "No message provided."}
+                        </p>
+                      </div>
+
+                      {/* Actions */}
+                      {request.status === "PENDING" && (
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                          <Button
+                            className="flex-1"
+                            disabled={isProcessing}
+                            onClick={() => handleApprove(request.id)}
+                          >
+                            {isProcessing ? "Processing..." : "Approve"}
+                          </Button>
+
+                          <Button
+                            variant="destructive"
+                            className="flex-1"
+                            disabled={isProcessing}
+                            onClick={() => handleReject(request.id)}
+                          >
+                            {isProcessing ? "Processing..." : "Reject"}
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Approved Information */}
+                      {request.status === "APPROVED" && (
+                        <div className="rounded-md border border-green-200 bg-green-50 p-4">
+                          <p className="text-sm font-medium text-green-700">
+                            Request Approved
+                          </p>
+
+                          <p className="mt-1 text-sm text-green-600">
+                            The tenant can now proceed with payment.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Rejected Information */}
+                      {request.status === "REJECTED" && (
+                        <div className="rounded-md border border-red-200 bg-red-50 p-4">
+                          <p className="text-sm font-medium text-red-700">
+                            Request Rejected
+                          </p>
+
+                          <p className="mt-1 text-sm text-red-600">
+                            This rental request has been rejected.
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       )}
-
-      {/* Rental Requests */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {requests.map((request) => (
-          <Card key={request.id} className="overflow-hidden">
-            {/* Property Image */}
-            <div className="relative h-52 w-full bg-muted">
-              {request.property.images?.[0] ? (
-                <Image
-                  src={request.property.images[0]}
-                  alt={request.property.title}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                  No image
-                </div>
-              )}
-            </div>
-
-            <CardHeader>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <CardTitle className="text-xl">
-                    {request.property.title}
-                  </CardTitle>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {request.property.address}, {request.property.city}
-                  </p>
-                </div>
-
-                <span
-                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                    statusStyles[request.status]
-                  }`}
-                >
-                  {request.status}
-                </span>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              {/* Tenant */}
-              <div>
-                <p className="text-sm font-medium">Tenant</p>
-
-                <div className="mt-1 text-sm text-muted-foreground">
-                  <p>{request.tenant?.name}</p>
-
-                  <p>{request.tenant?.email}</p>
-
-                  {request.tenant?.phone && <p>{request.tenant.phone}</p>}
-                </div>
-              </div>
-
-              {/* Monthly Rent */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Monthly Rent
-                </span>
-
-                <span className="font-semibold">
-                  ৳{request.property.rent.toLocaleString()}
-                </span>
-              </div>
-
-              {/* Move-in Date */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Move-in Date
-                </span>
-
-                <span className="font-medium">
-                  {new Date(request.moveInDate).toLocaleDateString()}
-                </span>
-              </div>
-
-              {/* Tenant Message */}
-              <div>
-                <p className="text-sm font-medium">Tenant Message</p>
-
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  {request.message || "No message provided."}
-                </p>
-              </div>
-
-              {/* Actions */}
-              {request.status === "PENDING" && (
-                <div className="flex gap-3 pt-2">
-                  <Button
-                    className="flex-1"
-                    disabled={actionId === request.id}
-                    onClick={() => handleApprove(request.id)}
-                  >
-                    {actionId === request.id ? "Processing..." : "Approve"}
-                  </Button>
-
-                  <Button
-                    variant="destructive"
-                    className="flex-1"
-                    disabled={actionId === request.id}
-                    onClick={() => handleReject(request.id)}
-                  >
-                    {actionId === request.id ? "Processing..." : "Reject"}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
     </main>
   );
 }
