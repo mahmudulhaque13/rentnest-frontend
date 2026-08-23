@@ -1,37 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RentNest
 
-## Getting Started
+RentNest is a rental property management platform for tenants, landlords, and admins.
 
-First, run the development server:
+## Live Site
+
+Frontend: YOUR_FRONTEND_URL
+
+Backend: YOUR_BACKEND_URL
+
+## Features
+
+- User registration and login
+- Role-based access: Tenant, Landlord, Admin
+- Property search and filtering
+- Property details
+- Rental request management
+- Stripe payment integration
+- Property reviews
+- Landlord property management
+- Landlord earnings
+- Admin user management
+- Admin property management
+- Admin rental request management
+- Admin category CRUD
+- Responsive design
+
+## Technologies
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Node.js
+- Express.js
+- PostgreSQL
+- Prisma
+- JWT
+- Stripe
+
+## Installation
 
 ```bash
+git clone YOUR_FRONTEND_GITHUB_URL
+cd rentnest-frontend
+npm install
+
+Create .env.local:
+
+BACKEND_API_URL=YOUR_BACKEND_URL
+JWT_ACCESS_SECRET=YOUR_JWT_ACCESS_SECRET
+
+Run the project:
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+Open:
+
+http://localhost:3000
+
+API Documentation
+
+See:
+
+API_INTEGRATION.md
+Admin Credentials
+Email: YOUR_ADMIN_EMAIL
+Password: YOUR_ADMIN_PASSWORD
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# rentnest-frontend
