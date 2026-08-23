@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { deleteProperty, getMyProperties } from "@/services/property";
+import {
+  deleteProperty,
+  getMyProperties,
+  updatePropertyAvailability,
+} from "@/services/property";
 
 import { RoleGuard } from "@/components/shared/role-guard";
 import { Loading } from "@/components/shared/loading";
@@ -35,7 +39,7 @@ interface IMyProperty {
   district: string;
   images: string[];
   amenities: string[];
-  status: string;
+  status: "AVAILABLE" | "UNAVAILABLE" | "RENTED";
   category: {
     id: string;
     name: string;
@@ -45,7 +49,13 @@ interface IMyProperty {
 function PropertiesContent() {
   const [properties, setProperties] = useState<IMyProperty[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [updatingAvailabilityId, setUpdatingAvailabilityId] = useState<
+    string | null
+  >(null);
+
   const [error, setError] = useState("");
 
   const [propertyToDelete, setPropertyToDelete] = useState<IMyProperty | null>(
@@ -99,6 +109,64 @@ function PropertiesContent() {
       cancelled = true;
     };
   }, []);
+
+  const handleAvailabilityChange = async (property: IMyProperty) => {
+    if (property.status === "RENTED") {
+      return;
+    }
+
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (!accessToken) {
+      const message = "Please login again.";
+
+      setError(message);
+      toast.error(message);
+
+      return;
+    }
+
+    const newStatus =
+      property.status === "AVAILABLE" ? "UNAVAILABLE" : "AVAILABLE";
+
+    setError("");
+    setUpdatingAvailabilityId(property.id);
+
+    try {
+      const updatedProperty = await updatePropertyAvailability(
+        property.id,
+        newStatus,
+        accessToken,
+      );
+
+      setProperties((currentProperties) =>
+        currentProperties.map((currentProperty) =>
+          currentProperty.id === property.id
+            ? {
+                ...currentProperty,
+                status: updatedProperty.status,
+              }
+            : currentProperty,
+        ),
+      );
+
+      toast.success(
+        newStatus === "AVAILABLE"
+          ? "Property is now available."
+          : "Property is now unavailable.",
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to update property availability";
+
+      setError(message);
+      toast.error(message);
+    } finally {
+      setUpdatingAvailabilityId(null);
+    }
+  };
 
   const handleDelete = async () => {
     if (!propertyToDelete) return;
@@ -192,108 +260,139 @@ function PropertiesContent() {
 
         {/* Property Cards */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {properties.map((property) => (
-            <Card key={property.id} className="overflow-hidden">
-              {/* Image */}
-              <div className="relative h-52 w-full overflow-hidden bg-muted">
-                {property.images?.[0] ? (
-                  <Image
-                    src={property.images[0]}
-                    alt={property.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                    No image
-                  </div>
-                )}
-              </div>
+          {properties.map((property) => {
+            const isRented = property.status === "RENTED";
+            const isUpdating = updatingAvailabilityId === property.id;
 
-              {/* Information */}
-              <CardHeader>
-                <div className="flex items-start justify-between gap-3">
-                  <CardTitle className="line-clamp-1">
-                    {property.title}
-                  </CardTitle>
-
-                  <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                      property.status === "AVAILABLE"
-                        ? "bg-green-100 text-green-700"
-                        : property.status === "RENTED"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {property.status}
-                  </span>
+            return (
+              <Card key={property.id} className="overflow-hidden">
+                {/* Image */}
+                <div className="relative h-52 w-full overflow-hidden bg-muted">
+                  {property.images?.[0] ? (
+                    <Image
+                      src={property.images[0]}
+                      alt={property.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                      No image
+                    </div>
+                  )}
                 </div>
 
-                <p className="text-sm text-muted-foreground">
-                  {property.address}, {property.city}, {property.district}
-                </p>
-              </CardHeader>
+                {/* Information */}
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-3">
+                    <CardTitle className="line-clamp-1">
+                      {property.title}
+                    </CardTitle>
 
-              <CardContent>
-                {/* Rent */}
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xl font-bold">
-                    ৳{property.rent.toLocaleString()}
-                    <span className="ml-1 text-xs font-normal text-muted-foreground">
-                      /month
+                    <span
+                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                        property.status === "AVAILABLE"
+                          ? "bg-green-100 text-green-700"
+                          : property.status === "RENTED"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {property.status}
                     </span>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    {property.address}, {property.city}, {property.district}
                   </p>
+                </CardHeader>
 
-                  <span className="text-sm text-muted-foreground">
-                    {property.category.name}
-                  </span>
-                </div>
+                <CardContent>
+                  {/* Rent */}
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xl font-bold">
+                      ৳{property.rent.toLocaleString()}
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">
+                        /month
+                      </span>
+                    </p>
 
-                {/* Bedrooms / Bathrooms */}
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-lg bg-muted p-3">
-                    <p className="text-xs text-muted-foreground">Bedrooms</p>
-
-                    <p className="mt-1 font-semibold">{property.bedrooms}</p>
+                    <span className="text-sm text-muted-foreground">
+                      {property.category.name}
+                    </span>
                   </div>
 
-                  <div className="rounded-lg bg-muted p-3">
-                    <p className="text-xs text-muted-foreground">Bathrooms</p>
+                  {/* Bedrooms / Bathrooms */}
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-lg bg-muted p-3">
+                      <p className="text-xs text-muted-foreground">Bedrooms</p>
 
-                    <p className="mt-1 font-semibold">{property.bathrooms}</p>
+                      <p className="mt-1 font-semibold">{property.bedrooms}</p>
+                    </div>
+
+                    <div className="rounded-lg bg-muted p-3">
+                      <p className="text-xs text-muted-foreground">Bathrooms</p>
+
+                      <p className="mt-1 font-semibold">{property.bathrooms}</p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Actions */}
-                <div className="mt-5 grid grid-cols-3 gap-2">
-                  <Link
-                    href={`/properties/${property.id}`}
-                    className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
-                  >
-                    View
-                  </Link>
+                  {/* Availability */}
+                  <div className="mt-5">
+                    <button
+                      type="button"
+                      onClick={() => handleAvailabilityChange(property)}
+                      disabled={isRented || isUpdating}
+                      className={`inline-flex h-10 w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium shadow-sm transition ${
+                        isRented
+                          ? "cursor-not-allowed bg-muted text-muted-foreground"
+                          : property.status === "AVAILABLE"
+                            ? "border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                            : "border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                      } disabled:cursor-not-allowed disabled:opacity-60`}
+                    >
+                      {isRented
+                        ? "Rented"
+                        : isUpdating
+                          ? "Updating..."
+                          : property.status === "AVAILABLE"
+                            ? "Make Unavailable"
+                            : "Make Available"}
+                    </button>
+                  </div>
 
-                  <Link
-                    href={`/landlord/properties/${property.id}/edit`}
-                    className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
-                  >
-                    Edit
-                  </Link>
+                  {/* Actions */}
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <Link
+                      href={`/properties/${property.id}`}
+                      className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+                    >
+                      View
+                    </Link>
 
-                  <button
-                    type="button"
-                    onClick={() => setPropertyToDelete(property)}
-                    disabled={deletingId === property.id}
-                    className="inline-flex h-10 items-center justify-center rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground shadow-sm hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {deletingId === property.id ? "Deleting..." : "Delete"}
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    <Link
+                      href={`/landlord/properties/${property.id}/edit`}
+                      className={`inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground ${
+                        isRented ? "pointer-events-none opacity-50" : ""
+                      }`}
+                    >
+                      Edit
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => setPropertyToDelete(property)}
+                      disabled={deletingId === property.id || isRented}
+                      className="inline-flex h-10 items-center justify-center rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground shadow-sm hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {deletingId === property.id ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </main>
 

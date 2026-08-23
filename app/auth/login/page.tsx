@@ -1,18 +1,21 @@
 "use client";
 
-import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FiEye, FiEyeOff } from "react-icons/fi";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 import { loginUser } from "@/services/auth";
-import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/providers/auth-provider";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +25,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     setError("");
@@ -34,14 +37,38 @@ export default function LoginPage() {
         password,
       });
 
-      const { accessToken } = result.data;
+      const accessToken = result.data.accessToken;
 
+      if (!accessToken) {
+        throw new Error("Access token was not returned");
+      }
+
+      // Save access token first.
       localStorage.setItem("accessToken", accessToken);
 
-      toast.success("Login successful!");
+      // Immediately load authenticated user into AuthProvider.
+      await refreshUser();
 
-      router.push("/");
-      router.refresh();
+      // Decode JWT payload to determine user role.
+      const payload = JSON.parse(
+        window.atob(
+          accessToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"),
+        ),
+      );
+
+      const role = payload.role;
+
+      toast.success("Login successful");
+
+      if (role === "TENANT") {
+        router.push("/");
+      } else if (role === "LANDLORD") {
+        router.push("/landlord");
+      } else if (role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Login failed";
 
@@ -53,19 +80,13 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
-          {/* Header */}
-          <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+    <main className="mx-auto flex min-h-[calc(100vh-80px)] w-full max-w-7xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl">Login</CardTitle>
+        </CardHeader>
 
-            <p className="mt-2 text-sm text-muted-foreground">
-              Login to your RentNest account
-            </p>
-          </div>
-
-          {/* Form */}
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div className="space-y-2">
@@ -74,9 +95,9 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
+                placeholder="Enter your email"
                 required
               />
             </div>
@@ -89,53 +110,38 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  required
+                  placeholder="Enter your password"
                   className="pr-10"
+                  required
                 />
 
                 <button
                   type="button"
-                  onClick={() => setShowPassword((previous) => !previous)}
+                  onClick={() => setShowPassword((current) => !current)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
-                    <FiEyeOff className="h-4 w-4" />
+                    <EyeOff className="h-4 w-4" />
                   ) : (
-                    <FiEye className="h-4 w-4" />
+                    <Eye className="h-4 w-4" />
                   )}
                 </button>
               </div>
             </div>
 
             {/* Error */}
-            {error && (
-              <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
-              </div>
-            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
 
             {/* Submit */}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
-
-          {/* Register Link */}
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/auth/register"
-              className="font-medium text-primary hover:underline"
-            >
-              Create account
-            </Link>
-          </p>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }

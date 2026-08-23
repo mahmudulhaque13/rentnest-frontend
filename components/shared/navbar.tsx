@@ -35,9 +35,13 @@ export function Navbar() {
             <span className="text-2xl font-bold text-primary">RentNest</span>
           </Link>
 
+          {/* ================================================= */}
           {/* Desktop Navigation */}
+          {/* ================================================= */}
+
           <div className="hidden items-center gap-8 md:flex">
             {/* Common Navigation */}
+
             <Link
               href="/"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary"
@@ -52,7 +56,10 @@ export function Navbar() {
               Properties
             </Link>
 
+            {/* ================================================= */}
             {/* Tenant Navigation */}
+            {/* ================================================= */}
+
             {user?.role === "TENANT" && (
               <>
                 <Link
@@ -71,7 +78,10 @@ export function Navbar() {
               </>
             )}
 
+            {/* ================================================= */}
             {/* Landlord Navigation */}
+            {/* ================================================= */}
+
             {user?.role === "LANDLORD" && (
               <>
                 <Link
@@ -97,7 +107,10 @@ export function Navbar() {
               </>
             )}
 
+            {/* ================================================= */}
             {/* Admin Navigation */}
+            {/* ================================================= */}
+
             {user?.role === "ADMIN" && (
               <>
                 <Link
@@ -112,6 +125,14 @@ export function Navbar() {
                   className="text-sm font-medium text-foreground transition-colors hover:text-primary"
                 >
                   Users
+                </Link>
+
+                {/* Categories */}
+                <Link
+                  href="/admin/categories"
+                  className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+                >
+                  Categories
                 </Link>
 
                 <Link
@@ -131,13 +152,17 @@ export function Navbar() {
             )}
           </div>
 
+          {/* ================================================= */}
           {/* Desktop Authentication */}
+          {/* ================================================= */}
+
           <div className="hidden items-center gap-3 md:flex">
             {loading ? (
               <span className="text-sm text-muted-foreground">Loading...</span>
             ) : user ? (
               <>
                 {/* User Information */}
+
                 <div className="text-right">
                   <p className="text-sm font-medium">{user.email}</p>
 
@@ -145,14 +170,17 @@ export function Navbar() {
                 </div>
 
                 {/* Logout */}
+
                 <Button variant="outline" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>
               </>
             ) : (
               /* Guest Authentication */
+
               <div className="flex items-center gap-2">
                 {/* Login */}
+
                 <Link
                   href="/auth/login"
                   className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
@@ -161,6 +189,7 @@ export function Navbar() {
                 </Link>
 
                 {/* Register */}
+
                 <Link
                   href="/auth/register"
                   className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
@@ -171,7 +200,10 @@ export function Navbar() {
             )}
           </div>
 
+          {/* ================================================= */}
           {/* Mobile Menu Button */}
+          {/* ================================================= */}
+
           <div className="flex items-center gap-2 md:hidden">
             {!loading && user && (
               <span className="max-w-32 truncate text-xs text-muted-foreground">
@@ -199,11 +231,15 @@ export function Navbar() {
           </div>
         </div>
 
+        {/* ================================================= */}
         {/* Mobile Navigation */}
+        {/* ================================================= */}
+
         {mobileMenuOpen && (
           <div className="border-t border-border py-4 md:hidden">
             <div className="flex flex-col gap-1">
               {/* Common Navigation */}
+
               <Link
                 href="/"
                 onClick={closeMobileMenu}
@@ -220,7 +256,10 @@ export function Navbar() {
                 Properties
               </Link>
 
+              {/* ================================================= */}
               {/* Tenant Navigation */}
+              {/* ================================================= */}
+
               {user?.role === "TENANT" && (
                 <>
                   <Link
@@ -241,7 +280,10 @@ export function Navbar() {
                 </>
               )}
 
+              {/* ================================================= */}
               {/* Landlord Navigation */}
+              {/* ================================================= */}
+
               {user?.role === "LANDLORD" && (
                 <>
                   <Link
@@ -270,7 +312,10 @@ export function Navbar() {
                 </>
               )}
 
+              {/* ================================================= */}
               {/* Admin Navigation */}
+              {/* ================================================= */}
+
               {user?.role === "ADMIN" && (
                 <>
                   <Link
@@ -287,6 +332,15 @@ export function Navbar() {
                     className="rounded-md px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted hover:text-primary"
                   >
                     Users
+                  </Link>
+
+                  {/* Categories */}
+                  <Link
+                    href="/admin/categories"
+                    onClick={closeMobileMenu}
+                    className="rounded-md px-3 py-2.5 text-sm font-medium transition-colors hover:bg-muted hover:text-primary"
+                  >
+                    Categories
                   </Link>
 
                   <Link
@@ -307,7 +361,10 @@ export function Navbar() {
                 </>
               )}
 
+              {/* ================================================= */}
               {/* Mobile Authentication */}
+              {/* ================================================= */}
+
               <div className="mt-3 border-t border-border pt-3">
                 {loading ? (
                   <p className="px-3 py-2 text-sm text-muted-foreground">
@@ -316,6 +373,7 @@ export function Navbar() {
                 ) : user ? (
                   <div className="space-y-3 px-3">
                     {/* User Information */}
+
                     <div>
                       <p className="truncate text-sm font-medium">
                         {user.email}
@@ -327,6 +385,7 @@ export function Navbar() {
                     </div>
 
                     {/* Logout */}
+
                     <Button
                       variant="outline"
                       className="w-full"
@@ -337,8 +396,10 @@ export function Navbar() {
                   </div>
                 ) : (
                   /* Mobile Guest Authentication */
+
                   <div className="flex gap-2 px-3">
                     {/* Login */}
+
                     <Link
                       href="/auth/login"
                       onClick={closeMobileMenu}
@@ -348,6 +409,7 @@ export function Navbar() {
                     </Link>
 
                     {/* Register */}
+
                     <Link
                       href="/auth/register"
                       onClick={closeMobileMenu}

@@ -30,6 +30,39 @@ const statusStyles: Record<RentalRequestStatus, string> = {
   ACTIVE: "bg-blue-100 text-blue-700",
 };
 
+/**
+ * Same property can have multiple historical rental requests.
+ *
+ * For the tenant's current request page, we only want to show
+ * the latest request for each property.
+ */
+const getLatestRequestsByProperty = (
+  requests: IRentalRequest[],
+): IRentalRequest[] => {
+  const latestRequests = new Map<string, IRentalRequest>();
+
+  for (const request of requests) {
+    const existingRequest = latestRequests.get(request.propertyId);
+
+    if (!existingRequest) {
+      latestRequests.set(request.propertyId, request);
+      continue;
+    }
+
+    const currentCreatedAt = new Date(request.createdAt).getTime();
+
+    const existingCreatedAt = new Date(existingRequest.createdAt).getTime();
+
+    if (currentCreatedAt > existingCreatedAt) {
+      latestRequests.set(request.propertyId, request);
+    }
+  }
+
+  return Array.from(latestRequests.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+};
+
 export default function RentalRequestsPage() {
   const { user, loading: authLoading } = useAuth();
 
@@ -57,7 +90,10 @@ export default function RentalRequestsPage() {
 
         const result = await getMyRentalRequests(accessToken);
 
-        setRequests(result);
+        // Show only the latest request for each property.
+        const latestRequests = getLatestRequestsByProperty(result);
+
+        setRequests(latestRequests);
       } catch (error) {
         const message =
           error instanceof Error
@@ -87,9 +123,14 @@ export default function RentalRequestsPage() {
     try {
       await cancelRentalRequest(requestId, accessToken);
 
-      setRequests((currentRequests) =>
-        currentRequests.filter((request) => request.id !== requestId),
-      );
+      setRequests((currentRequests) => {
+        const remainingRequests = currentRequests.filter(
+          (request) => request.id !== requestId,
+        );
+
+        // Re-apply latest-per-property logic after cancellation.
+        return getLatestRequestsByProperty(remainingRequests);
+      });
 
       toast.success("Rental request cancelled successfully.");
     } catch (error) {
@@ -216,13 +257,12 @@ export default function RentalRequestsPage() {
             /*
              * Payment status has priority.
              *
-             * This handles both:
+             * This handles:
              *
              * ACTIVE + PAID
-             *
-             * and old records:
-             *
              * APPROVED + PAID
+             *
+             * Both should display as ACTIVE.
              */
             const isPaid = request.payment?.status === "PAID";
 

@@ -1,3 +1,5 @@
+import type { ICategory } from "@/types/category.types";
+
 const API_URL = "/api";
 
 export interface IAdminUser {
@@ -70,6 +72,10 @@ const getAuthHeaders = (accessToken: string) => ({
   Authorization: accessToken,
 });
 
+// ======================================================
+// ADMIN USERS
+// ======================================================
+
 export const getAllAdminUsers = async (
   accessToken: string,
 ): Promise<IAdminUser[]> => {
@@ -113,6 +119,10 @@ export const updateAdminUserStatus = async (
   return result.data;
 };
 
+// ======================================================
+// ADMIN PROPERTIES
+// ======================================================
+
 export const getAllAdminProperties = async (
   accessToken: string,
 ): Promise<IAdminProperty[]> => {
@@ -130,6 +140,10 @@ export const getAllAdminProperties = async (
   return result.data;
 };
 
+// ======================================================
+// ADMIN RENTAL REQUESTS
+// ======================================================
+
 export const getAllAdminRentalRequests = async (
   accessToken: string,
 ): Promise<IAdminRentalRequest[]> => {
@@ -145,4 +159,95 @@ export const getAllAdminRentalRequests = async (
   }
 
   return result.data;
+};
+
+// ======================================================
+// CATEGORIES
+// ======================================================
+
+export const getAllCategories = async (
+  accessToken: string,
+): Promise<ICategory[]> => {
+  const response = await fetch(`${API_URL}/categories`, {
+    headers: getAuthHeaders(accessToken),
+    cache: "no-store",
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to load categories");
+  }
+
+  return result.data;
+};
+
+export const createCategory = async (
+  data: {
+    name: string;
+    slug: string;
+  },
+  accessToken: string,
+): Promise<ICategory> => {
+  const response = await fetch(`${API_URL}/categories`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(accessToken),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+    cache: "no-store",
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to create category");
+  }
+
+  return result.data;
+};
+
+export const updateCategory = async (
+  categoryId: string,
+  data: {
+    name: string;
+    slug: string;
+  },
+  accessToken: string,
+): Promise<ICategory> => {
+  const response = await fetch(`${API_URL}/categories/${categoryId}`, {
+    method: "PATCH",
+    headers: {
+      ...getAuthHeaders(accessToken),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+    cache: "no-store",
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to update category");
+  }
+
+  return result.data;
+};
+
+export const deleteCategory = async (
+  categoryId: string,
+  accessToken: string,
+): Promise<void> => {
+  const response = await fetch(`${API_URL}/categories/${categoryId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(accessToken),
+    cache: "no-store",
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to delete category");
+  }
 };

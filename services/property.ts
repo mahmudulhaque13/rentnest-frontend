@@ -129,6 +129,31 @@ export const updateProperty = async (
   return result.data;
 };
 
+export const updatePropertyAvailability = async (
+  id: string,
+  status: "AVAILABLE" | "UNAVAILABLE",
+  accessToken: string,
+) => {
+  const response = await fetch(`${API_URL}/properties/${id}/availability`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: accessToken,
+    },
+    body: JSON.stringify({
+      status,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to update property availability");
+  }
+
+  return result.data;
+};
+
 export const deleteProperty = async (id: string, accessToken: string) => {
   const response = await fetch(`${API_URL}/properties/${id}`, {
     method: "DELETE",

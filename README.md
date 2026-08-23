@@ -1,69 +1,39 @@
-# RentNest
+# RentNest 🏠
 
-RentNest is a rental property management platform for tenants, landlords, and admins.
-
-## Live Site
-
-Frontend: YOUR_FRONTEND_URL
-
-Backend: YOUR_BACKEND_URL
+RentNest is a rental property marketplace built with Next.js.
 
 ## Features
 
 - User registration and login
-- Role-based access: Tenant, Landlord, Admin
-- Property search and filtering
-- Property details
-- Rental request management
-- Stripe payment integration
-- Property reviews
+- Tenant, Landlord and Admin roles
+- Browse and search rental properties
 - Landlord property management
-- Landlord earnings
-- Admin user management
-- Admin property management
-- Admin rental request management
-- Admin category CRUD
+- Rental request management
+- Admin user and property management
+- Stripe payment integration
 - Responsive design
+- Loading and error handling
 
 ## Technologies
 
 - Next.js
-- React
 - TypeScript
 - Tailwind CSS
-- Node.js
-- Express.js
-- PostgreSQL
-- Prisma
-- JWT
+- Shadcn UI
+- Next.js `next/image`
+- REST API
 - Stripe
 
-## Installation
+## Live Site
 
-```bash
-git clone YOUR_FRONTEND_GITHUB_URL
-cd rentnest-frontend
-npm install
+https://rentnest-frontend-lyart.vercel.app
 
-Create .env.local:
+## Backend API
 
-BACKEND_API_URL=YOUR_BACKEND_URL
-JWT_ACCESS_SECRET=YOUR_JWT_ACCESS_SECRET
+https://rentnest-backend-83pn.onrender.com
 
-Run the project:
+## Admin Login
 
-npm run dev
+Email: `admin@gmail.com`
 
-Open:
-
-http://localhost:3000
-
-API Documentation
-
-See:
-
-API_INTEGRATION.md
-Admin Credentials
-Email: YOUR_ADMIN_EMAIL
-Password: YOUR_ADMIN_PASSWORD
-```
+Password: `12345678`

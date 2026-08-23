@@ -42,12 +42,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await getMe(accessToken);
 
-      if (result.success) {
+      if (result.success && result.data) {
         setUser(result.data);
       } else {
+        localStorage.removeItem("accessToken");
         setUser(null);
       }
-    } catch {
+    } catch (error) {
+      console.error("Failed to load authenticated user:", error);
+
       localStorage.removeItem("accessToken");
       setUser(null);
     }
@@ -69,8 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await logoutUser();
     } catch {
-      // Even if backend logout fails,
-      // remove local authentication state.
+      // Backend logout failure should not
+      // prevent local logout.
     } finally {
       localStorage.removeItem("accessToken");
       setUser(null);

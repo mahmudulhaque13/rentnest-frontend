@@ -21,6 +21,9 @@ export default async function PropertyDetailsPage({
 
   const property = await getPropertyById(id);
 
+  const isAvailable = property.status === "AVAILABLE";
+  const isRented = property.status === "RENTED";
+
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       {/* Property Details */}
@@ -63,9 +66,11 @@ export default async function PropertyDetailsPage({
 
               <span
                 className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  property.status === "AVAILABLE"
+                  isAvailable
                     ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
+                    : isRented
+                      ? "bg-red-100 text-red-700"
+                      : "bg-yellow-100 text-yellow-700"
                 }`}
               >
                 {property.status}
@@ -114,14 +119,20 @@ export default async function PropertyDetailsPage({
               <h2 className="font-semibold">Amenities</h2>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                {property.amenities.map((amenity) => (
-                  <span
-                    key={amenity}
-                    className="rounded-md bg-muted px-3 py-1.5 text-sm text-muted-foreground"
-                  >
-                    {amenity}
-                  </span>
-                ))}
+                {property.amenities.length > 0 ? (
+                  property.amenities.map((amenity) => (
+                    <span
+                      key={amenity}
+                      className="rounded-md bg-muted px-3 py-1.5 text-sm text-muted-foreground"
+                    >
+                      {amenity}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No amenities listed.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -151,7 +162,25 @@ export default async function PropertyDetailsPage({
       </div>
 
       {/* Rental Request */}
-      <RentalRequestForm propertyId={property.id} />
+      {isAvailable ? (
+        <RentalRequestForm propertyId={property.id} />
+      ) : (
+        <Card className="mt-10">
+          <CardContent className="py-8 text-center">
+            <h2 className="text-xl font-semibold">
+              {isRented
+                ? "Property Already Rented"
+                : "Property Currently Unavailable"}
+            </h2>
+
+            <p className="mt-2 text-sm text-muted-foreground">
+              {isRented
+                ? "This property has already been rented and is no longer accepting rental requests."
+                : "This property is currently unavailable and is not accepting rental requests."}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Reviews */}
       <PropertyReviews
