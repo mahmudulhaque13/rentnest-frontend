@@ -11,6 +11,10 @@ RentNest is a rental property marketplace built with Next.js and TypeScript. It 
 
 ## Screenshots
 
+### Homepage
+
+![RentNest Homepage](./rentnest-homepage.png)
+
 <!-- Upload a screenshot to the repository, then uncomment and update this image path. -->
 
 <!-- ![RentNest Homepage](./screenshots/rentnest-homepage.png) -->
